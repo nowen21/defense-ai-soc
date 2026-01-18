@@ -398,16 +398,16 @@ onNetworkSelected(network: NetworkType): void {
 │                                                             │
 │  Red seleccionada: LAN Corporativa                          │
 │                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  ESCANEANDO RED...  ████████████░░░░░░░░  67%       │   │
-│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  ESCANEANDO RED...  ████████████░░░░░░░░  67%       │    │
+│  └─────────────────────────────────────────────────────┘    │
 │                                                             │
 │  Dispositivos encontrados: 47                               │
 │                                                             │
-│  ┌──────────┬──────────┬──────────┬──────────┐            │
-│  │ Routers  │ Switches │ Servers  │ Endpoints│            │
-│  │    3     │    8     │    12    │    24    │            │
-│  └──────────┴──────────┴──────────┴──────────┘            │
+│  ┌──────────┬──────────┬──────────┬──────────┐              │
+│  │ Routers  │ Switches │ Servers  │ Endpoints│              │
+│  │    3     │    8     │    12    │    24    │              │
+│  └──────────┴──────────┴──────────┴──────────┘              │
 │                                                             │
 │  [Anterior]                        [Siguiente: Seguridad]   │
 └─────────────────────────────────────────────────────────────┘
@@ -434,15 +434,15 @@ onNetworkSelected(network: NetworkType): void {
 │  PASO 3: Configuración de Seguridad                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  MÓDULOS DE DETECCIÓN                               │   │
-│  ├─────────────────────────────────────────────────────┤   │
-│  │  [✓] Detección de Intrusiones (IDS)                 │   │
-│  │  [✓] Prevención de Intrusiones (IPS)                │   │
-│  │  [✓] Detección de Anomalías (ML)                    │   │
-│  │  [✓] Análisis de Comportamiento                     │   │
-│  │  [ ] Honeypots                                      │   │
-│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  MÓDULOS DE DETECCIÓN                               │    │
+│  ├─────────────────────────────────────────────────────┤    │
+│  │  [✓] Detección de Intrusiones (IDS)                 │    │
+│  │  [✓] Prevención de Intrusiones (IPS)                │    │
+│  │  [✓] Detección de Anomalías (ML)                    │    │
+│  │  [✓] Análisis de Comportamiento                     │    │
+│  │  [ ] Honeypots                                      │    │
+│  └─────────────────────────────────────────────────────┘    │
 │                                                             │
 │  Nivel de sensibilidad: [====●=====] Medio                  │
 │                                                             │
