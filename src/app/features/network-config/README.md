@@ -38,21 +38,21 @@ El sistema SENTINEL-ML necesita conocer la topología de la red para ajustar sus
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  NetworkConfigComponent                      │
-│                     (COMPONENTE PADRE)                       │
-│                                                              │
+│                  NetworkConfigComponent                     │
+│                     (COMPONENTE PADRE)                      │
+│                                                             │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │                    WIZARD                            │    │
-│  │  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐            │    │
-│  │  │Paso 1│──│Paso 2│──│Paso 3│──│Paso 4│            │    │
-│  │  └──────┘  └──────┘  └──────┘  └──────┘            │    │
+│  │                    WIZARD                           │    │
+│  │  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐             │    │
+│  │  │Paso 1│──│Paso 2│──│Paso 3│──│Paso 4│             │    │
+│  │  └──────┘  └──────┘  └──────┘  └──────┘             │    │
 │  └─────────────────────────────────────────────────────┘    │
-│                          │                                   │
-│                          ▼                                   │
+│                          │                                  │
+│                          ▼                                  │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │           NetworkTypeSelectorComponent               │    │
-│  │              (COMPONENTE HIJO)                       │    │
-│  │                                                      │    │
+│  │           NetworkTypeSelectorComponent              │    │
+│  │              (COMPONENTE HIJO)                      │    │
+│  │                                                     │    │
 │  │   Se muestra SOLO en el Paso 1                      │    │
 │  │   Emite el evento (networkSelected) al padre        │    │
 │  └─────────────────────────────────────────────────────┘    │
@@ -74,40 +74,40 @@ El sistema SENTINEL-ML necesita conocer la topología de la red para ajustar sus
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         FLUJO COMPLETO                               │
+│                         FLUJO COMPLETO                              │
 └─────────────────────────────────────────────────────────────────────┘
 
 Usuario accede a /network-config
             │
             ▼
-┌─────────────────────────────────────┐
-│  PASO 1: Seleccionar Tipo de Red    │
-│  ─────────────────────────────────  │
-│                                     │
-│  Se muestra NetworkTypeSelectorComponent
-│                                     │
-│  Usuario ve 6 tarjetas de tipos:    │
-│  • LAN                              │
-│  • WAN                              │
-│  • DMZ                              │
-│  • Industrial                       │
-│  • Wireless                         │
-│  • Cloud/Híbrida                    │
-│                                     │
-│  Usuario hace clic en una tarjeta   │
-│            │                        │
-│            ▼                        │
-│  Se muestra panel de detalles       │
-│  Se inicia animación de "escaneo"   │
-│            │                        │
-│            ▼                        │
-│  Usuario hace clic en "Confirmar"   │
-│            │                        │
-│            ▼                        │
-│  Componente hijo EMITE evento:      │
-│  networkSelected.emit(network)      │
-│            │                        │
-└────────────│────────────────────────┘
+┌──────────────────────────────────────────┐
+│  PASO 1: Seleccionar Tipo de Red         │
+│  ─────────────────────────────────       │
+│                                          │
+│  Se muestra NetworkTypeSelectorComponent │
+│                                          │
+│  Usuario ve 6 tarjetas de tipos:         │
+│  • LAN                                   │
+│  • WAN                                   │
+│  • DMZ                                   │
+│  • Industrial                            │
+│  • Wireless                              │
+│  • Cloud/Híbrida                         │
+│                                          │
+│  Usuario hace clic en una tarjeta        │
+│            │                             │
+│            ▼                             │
+│  Se muestra panel de detalles            │
+│  Se inicia animación de "escaneo"        │
+│            │                             │
+│            ▼                             │
+│  Usuario hace clic en "Confirmar"        │
+│            │                             │
+│            ▼                             │
+│  Componente hijo EMITE evento:           │
+│  networkSelected.emit(network)           │
+│            │                             │
+└────────────│─────────────────────────────┘
              │
              ▼
 ┌─────────────────────────────────────┐
