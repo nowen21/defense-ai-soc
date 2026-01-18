@@ -1,0 +1,28 @@
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-tag">Centro de Control</div>
+    <h1 class="page-header-title">Dashboard de Seguridad</h1>
+    <p class="page-header-subtitle">Monitoreo en tiempo real del sistema de detección de amenazas</p>
+</div>
+
+<!-- Alerts -->
+<div class="alert-sentinel critical animate-fade-in">
+    <i class="bi bi-exclamation-octagon-fill alert-sentinel-icon"></i>
+    <div class="alert-sentinel-content">
+        <div class="alert-sentinel-title">Amenaza Detectada</div>
+        <div class="alert-sentinel-message">Se ha detectado un intento de intrusión desde la IP
+            185.234.72.15. El sistema ha bloqueado automáticamente la conexión.</div>
+    </div>
+    <button class="btn-sentinel-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;">
+        Investigar
+    </button>
+</div>
+
+<!-- Stats Row -->
+<app-stat-card></app-stat-card>
+
+<!-- Charts Row -->
+<app-traffic-chart></app-traffic-chart>
+
+<!-- Table Row -->
+<app-threat-table></app-threat-table>         

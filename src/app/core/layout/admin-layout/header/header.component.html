@@ -1,0 +1,56 @@
+<header class="header">
+    <div class="header-left">
+        <button class="header-toggle" onclick="toggleSidebar()">
+            <i class="bi bi-list"></i>
+        </button>
+        <div class="header-breadcrumb">
+            <i class="bi bi-house-fill"></i>
+            <span>/</span>
+            <span>Dashboard</span>
+        </div>
+    </div>
+
+    <div class="header-center">
+        <div class="header-status" id="systemStatus">
+            <span class="status-dot"></span>
+            <span class="header-status-text">SISTEMA OPERATIVO</span>
+        </div>
+    </div>
+
+    <div class="header-right">
+        <div class="header-stats">
+            <div class="header-stat">
+                <span class="header-stat-value" id="statPkts">2,847</span>
+                <span class="header-stat-label">PKT/S</span>
+            </div>
+            <div class="header-stat">
+                <span class="header-stat-value" id="statConn">156</span>
+                <span class="header-stat-label">CONN</span>
+            </div>
+            <div class="header-stat" id="statThreats">
+                <span class="header-stat-value">0</span>
+                <span class="header-stat-label">THREATS</span>
+            </div>
+        </div>
+
+        <button class="header-action" onclick="toggleNotifications()">
+            <i class="bi bi-bell-fill"></i>
+            <span class="badge">3</span>
+        </button>
+
+        <button class="header-action" onclick="toggleTheme()">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
+
+        <div class="header-user">
+            <div class="header-user-avatar">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <div class="header-user-info">
+                <span class="header-user-name">Admin User</span>
+                <span class="header-user-role">Administrador</span>
+            </div>
+            <i class="bi bi-chevron-down" style="color: var(--text-muted); font-size: 0.75rem;"></i>
+        </div>
+    </div>
+</header>

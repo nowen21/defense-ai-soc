@@ -1,0 +1,104 @@
+<aside class="sidebar" id="sidebar">
+    <!-- Sidebar Header -->
+    <div class="sidebar-header">
+        <a href="#" class="sidebar-logo">
+            <div class="sidebar-logo-icon">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <div class="sidebar-logo-text">
+                <span class="sidebar-logo-name">SENTINEL-ML</span>
+                <span class="sidebar-logo-subtitle">THREAT DETECTION</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar-nav">
+        <!-- Principal -->
+        <div class="menu-section">
+            <div class="menu-section-title">Principal</div>
+            <a routerLink="/network-config" class="menu-item">
+                <i class="bi bi-hdd-network-fill menu-item-icon"></i>
+                <span class="menu-item-text">Network Config</span>
+                <span class="menu-item-badge primary">New</span>
+            </a>
+            <a routerLink="/dashboard" class="menu-item active">
+                <i class="bi bi-diagram-3-fill menu-item-icon"></i>
+                <span class="menu-item-text">Network Security Monitor</span>
+                <span class="menu-item-badge primary">Live</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <i class="bi bi-exclamation-triangle-fill menu-item-icon"></i>
+                <span class="menu-item-text">Amenazas</span>
+                <span class="menu-item-badge danger">5</span>
+            </a>
+        </div>
+
+        <!-- Análisis -->
+        <div class="menu-section">
+            <div class="menu-section-title">Análisis</div>
+
+            <button class="menu-item" onclick="toggleSubmenu(this)">
+                <i class="bi bi-cpu-fill menu-item-icon"></i>
+                <span class="menu-item-text">Motor de IA</span>
+                <i class="bi bi-chevron-down menu-item-arrow"></i>
+            </button>
+            <div class="submenu">
+                <a href="#" class="menu-item">
+                    <i class="bi bi-activity menu-item-icon"></i>
+                    <span class="menu-item-text">Detección</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="bi bi-lightbulb-fill menu-item-icon"></i>
+                    <span class="menu-item-text">Explicabilidad</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="bi bi-graph-up menu-item-icon"></i>
+                    <span class="menu-item-text">Métricas</span>
+                </a>
+            </div>
+
+            <a href="#" class="menu-item">
+                <i class="bi bi-funnel-fill menu-item-icon"></i>
+                <span class="menu-item-text">Flujos de Red</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <i class="bi bi-file-earmark-bar-graph menu-item-icon"></i>
+                <span class="menu-item-text">Reportes</span>
+            </a>
+        </div>
+
+        <!-- Sistema -->
+        <div class="menu-section">
+            <div class="menu-section-title">Sistema</div>
+
+            <a href="#" class="menu-item">
+                <i class="bi bi-hdd-network-fill menu-item-icon"></i>
+                <span class="menu-item-text">Dispositivos</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <i class="bi bi-terminal-fill menu-item-icon"></i>
+                <span class="menu-item-text">Logs</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <i class="bi bi-gear-fill menu-item-icon"></i>
+                <span class="menu-item-text">Configuración</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <div class="sidebar-footer-status">
+            <span class="status-dot"></span>
+            <div class="sidebar-footer-info">
+                <span>Sistema Operativo</span>
+                <span>v2.0.0 · IDS Activo</span>
+            </div>
+        </div>
+    </div>
+</aside>

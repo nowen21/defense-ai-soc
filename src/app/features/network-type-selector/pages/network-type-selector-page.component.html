@@ -1,0 +1,258 @@
+<div class="network-type-container">
+  
+  <!-- Header de la sección -->
+  <div class="page-header">
+    <span class="page-header-tag">Configuración de Red</span>
+    <h1 class="page-header-title">Definir Tipo de Red</h1>
+    <p class="page-header-subtitle">
+      Seleccione el tipo de red que desea monitorear. SENTINEL-ML ajustará sus 
+      algoritmos de detección según la topología seleccionada.
+    </p>
+  </div>
+  
+  <!-- Estado de configuración -->
+  <div class="config-status" [class.configured]="isConfigured()">
+    <div class="status-indicator">
+      <span class="status-dot" [class.active]="isConfigured()"></span>
+      <span class="status-text font-mono">
+        {{ isConfigured() ? 'RED CONFIGURADA' : 'PENDIENTE CONFIGURACIÓN' }}
+      </span>
+    </div>
+    @if (isConfigured()) {
+      <button class="btn-sentinel btn-sentinel-secondary" (click)="clearSelection()">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        Cambiar
+      </button>
+    }
+  </div>
+  
+  <!-- Grid de tipos de red -->
+  <div class="network-grid" @staggerIn>
+    @for (network of networkTypes; track trackByNetworkId($index, network)) {
+      <div 
+        class="network-card card"
+        [class.selected]="selectedNetwork()?.id === network.id"
+        [style.--card-accent]="network.color"
+        [@selectAnimation]="selectedNetwork()?.id === network.id ? 'selected' : 'unselected'"
+        (click)="selectNetwork(network)">
+        
+        <!-- Barra superior de color -->
+        <div class="card-accent-bar" [style.background]="network.color"></div>
+        
+        <!-- Icono animado -->
+        <div class="network-icon-wrapper">
+          <div class="network-icon" [style.background]="network.color + '20'" [style.color]="network.color">
+            <mat-icon>{{ network.icon }}</mat-icon>
+          </div>
+          <div class="icon-ring" [style.border-color]="network.color"></div>
+          @if (selectedNetwork()?.id === network.id) {
+            <div class="icon-pulse" [style.background]="network.color"></div>
+          }
+        </div>
+        
+        <!-- Contenido -->
+        <div class="network-content">
+          <h3 class="network-name">{{ network.nombre }}</h3>
+          <p class="network-description">{{ network.descripcion }}</p>
+          
+          <!-- Stats rápidas -->
+          <div class="network-quick-stats">
+            <div class="quick-stat">
+              <mat-icon>devices</mat-icon>
+              <span>{{ network.dispositivos }}+ dispositivos</span>
+            </div>
+            <div class="quick-stat">
+              <mat-icon>speed</mat-icon>
+              <span>{{ network.velocidad }}</span>
+            </div>
+          </div>
+          
+          <!-- Badge de riesgo -->
+          <div class="network-risk">
+            <span class="badge-status" [class]="getRiskClass(network.riesgo)">
+              <mat-icon>{{ network.riesgo === 'alto' ? 'warning' : 'shield' }}</mat-icon>
+              Riesgo {{ getRiskLabel(network.riesgo) }}
+            </span>
+          </div>
+        </div>
+        
+        <!-- Indicador de selección -->
+        <div class="selection-indicator" [class.active]="selectedNetwork()?.id === network.id">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+      </div>
+    }
+  </div>
+  
+  <!-- Panel de detalles de red seleccionada -->
+  @if (selectedNetwork(); as network) {
+    <div class="detail-panel card" @slideIn>
+      <div class="card-header">
+        <h3 class="card-title">
+          <mat-icon [style.color]="network.color">{{ network.icon }}</mat-icon>
+          {{ network.nombre }} - Detalles de Configuración
+        </h3>
+        <span class="badge-status" [class]="getRiskClass(network.riesgo)">
+          Riesgo {{ getRiskLabel(network.riesgo) }}
+        </span>
+      </div>
+      
+      <div class="card-body">
+        <div class="detail-grid">
+          
+          <!-- Visualización de red -->
+          <div class="network-visualization">
+            <div class="visualization-header font-mono">
+              <mat-icon>account_tree</mat-icon>
+              TOPOLOGÍA DE RED
+            </div>
+            <div class="topology-canvas">
+              <!-- Nodos animados -->
+              <div class="topology-nodes">
+                <!-- Nodo central -->
+                <div class="topo-node central" @nodeAnimation [style.--node-color]="network.color">
+                  <mat-icon>{{ network.icon }}</mat-icon>
+                  <span>Core</span>
+                </div>
+                
+                <!-- Nodos periféricos -->
+                @for (i of [1,2,3,4,5,6]; track i) {
+                  <div 
+                    class="topo-node peripheral" 
+                    [class]="'node-' + i"
+                    [style.--node-color]="network.color"
+                    [style.animation-delay]="(i * 100) + 'ms'"
+                    @nodeAnimation>
+                    <mat-icon>{{ getPeripheralIcon(i) }}</mat-icon>
+                  </div>
+                }
+                
+                <!-- Conexiones SVG -->
+                <svg class="connections-svg" viewBox="0 0 300 200">
+                  @for (i of [1,2,3,4,5,6]; track i) {
+                    <line 
+                      class="connection-line"
+                      [attr.x1]="150"
+                      [attr.y1]="100"
+                      [attr.x2]="getNodeX(i)"
+                      [attr.y2]="getNodeY(i)"
+                      [style.stroke]="network.color"
+                      @connectionAnimation />
+                  }
+                </svg>
+                
+                <!-- Paquetes animados -->
+                @for (i of [1,2,3]; track i) {
+                  <div 
+                    class="data-packet"
+                    [style.--packet-color]="network.color"
+                    [style.animation-delay]="(i * 500) + 'ms'">
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          
+          <!-- Información detallada -->
+          <div class="detail-info" @listStagger>
+            <!-- Características -->
+            <div class="info-section">
+              <h4 class="info-title font-mono">
+                <mat-icon>checklist</mat-icon>
+                CARACTERÍSTICAS
+              </h4>
+              <ul class="feature-list">
+                @for (caracteristica of network.caracteristicas; track caracteristica) {
+                  <li class="feature-item">
+                    <mat-icon [style.color]="network.color">check</mat-icon>
+                    {{ caracteristica }}
+                  </li>
+                }
+              </ul>
+            </div>
+            
+            <!-- Protocolos -->
+            <div class="info-section">
+              <h4 class="info-title font-mono">
+                <mat-icon>code</mat-icon>
+                PROTOCOLOS SOPORTADOS
+              </h4>
+              <div class="protocol-tags">
+                @for (protocolo of network.protocolos; track protocolo) {
+                  <span class="protocol-tag" [style.border-color]="network.color" [style.color]="network.color">
+                    {{ protocolo }}
+                  </span>
+                }
+              </div>
+            </div>
+            
+            <!-- Especificaciones -->
+            <div class="info-section">
+              <h4 class="info-title font-mono">
+                <mat-icon>info</mat-icon>
+                ESPECIFICACIONES
+              </h4>
+              <div class="specs-grid">
+                <div class="spec-item">
+                  <span class="spec-label">Dispositivos</span>
+                  <span class="spec-value font-display" [style.color]="network.color">
+                    {{ network.dispositivos }}+
+                  </span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">Velocidad</span>
+                  <span class="spec-value font-display" [style.color]="network.color">
+                    {{ network.velocidad }}
+                  </span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">Cobertura</span>
+                  <span class="spec-value font-display" [style.color]="network.color">
+                    {{ network.cobertura }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Barra de progreso de escaneo -->
+        @if (isScanning()) {
+          <div class="scan-progress">
+            <div class="scan-header">
+              <span class="font-mono">ESCANEANDO RED...</span>
+              <span class="font-mono">{{ scanProgress() }}%</span>
+            </div>
+            <div class="progress-bar">
+              <div 
+                class="progress-fill" 
+                [style.width.%]="scanProgress()"
+                [style.background]="'linear-gradient(90deg, ' + network.color + ', ' + network.color + '80)'">
+              </div>
+            </div>
+            <div class="scan-details font-mono">
+              <span><mat-icon>search</mat-icon> Detectando dispositivos</span>
+              <span><mat-icon>router</mat-icon> Mapeando topología</span>
+              <span><mat-icon>security</mat-icon> Evaluando seguridad</span>
+            </div>
+          </div>
+        }
+      </div>
+      
+      <div class="card-footer">
+        <button class="btn-sentinel btn-sentinel-secondary" (click)="clearSelection()">
+          <mat-icon>close</mat-icon>
+          Cancelar
+        </button>
+        <button 
+          class="btn-sentinel btn-sentinel-primary" 
+          [disabled]="isScanning()"
+          (click)="confirmSelection()"
+          [style.background]="'linear-gradient(135deg, ' + network.color + ', ' + network.color + 'cc)'">
+          <mat-icon>{{ isScanning() ? 'hourglass_empty' : 'check' }}</mat-icon>
+          {{ isScanning() ? 'Escaneando...' : 'Confirmar Selección' }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

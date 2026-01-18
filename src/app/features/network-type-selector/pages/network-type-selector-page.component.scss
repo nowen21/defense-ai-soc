@@ -1,0 +1,580 @@
+// ============================================================
+// SENTINEL-ML - NETWORK TYPE SELECTOR STYLES
+// Estilos específicos del componente (complementa estilos globales)
+// ============================================================
+
+.network-type-container {
+  animation: fadeIn 0.5s ease;
+}
+
+// Estado de configuración
+.config-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+  
+  &.configured {
+    border-color: var(--primary);
+    background: rgba(0, 255, 136, 0.05);
+  }
+  
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: all 0.3s ease;
+    
+    &.active {
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary);
+      animation: pulse 2s infinite;
+    }
+  }
+  
+  .status-text {
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+  }
+}
+
+// Grid de redes
+.network-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Card de red
+.network-card {
+  position: relative;
+  padding: 1.5rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &:hover:not(.selected) {
+    transform: translateY(-5px);
+    border-color: var(--card-accent, var(--primary));
+    
+    .icon-ring {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+  }
+  
+  &.selected {
+    border-color: var(--card-accent, var(--primary));
+    background: linear-gradient(135deg, var(--bg-secondary), rgba(0, 255, 136, 0.02));
+    
+    .selection-indicator {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .icon-pulse {
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+  }
+}
+
+// Barra de acento superior
+.card-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+  
+  .network-card:hover &,
+  .network-card.selected & {
+    opacity: 1;
+  }
+}
+
+// Icono de red
+.network-icon-wrapper {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 1rem;
+}
+
+.network-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+  
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.icon-ring {
+  position: absolute;
+  inset: -5px;
+  border: 2px solid;
+  border-radius: 20px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.icon-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  z-index: 0;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.1;
+    transform: scale(1.2);
+  }
+}
+
+// Contenido de la card
+.network-content {
+  .network-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  
+  .network-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+}
+
+.network-quick-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  
+  .quick-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+.network-risk {
+  .badge-status {
+    font-size: 0.65rem;
+    
+    mat-icon {
+      font-size: 12px;
+      width: 12px;
+      height: 12px;
+    }
+  }
+}
+
+// Indicador de selección
+.selection-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.3s ease;
+  color: var(--primary);
+  
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+// Panel de detalles
+.detail-panel {
+  margin-top: 1.5rem;
+  
+  .card-header {
+    .card-title {
+      mat-icon {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Visualización de topología
+.network-visualization {
+  .visualization-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+.topology-canvas {
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  height: 250px;
+  position: relative;
+  overflow: hidden;
+}
+
+.topology-nodes {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.topo-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  
+  mat-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border: 2px solid var(--node-color, var(--primary));
+    border-radius: 10px;
+    font-size: 20px;
+    color: var(--node-color, var(--primary));
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+  }
+  
+  span {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+  }
+  
+  &.central {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    mat-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+    }
+  }
+  
+  &.peripheral {
+    mat-icon {
+      width: 35px;
+      height: 35px;
+      font-size: 16px;
+    }
+  }
+  
+  // Posiciones de nodos periféricos
+  &.node-1 { top: 15%; left: 50%; transform: translateX(-50%); }
+  &.node-2 { top: 30%; right: 15%; }
+  &.node-3 { bottom: 30%; right: 15%; }
+  &.node-4 { bottom: 15%; left: 50%; transform: translateX(-50%); }
+  &.node-5 { bottom: 30%; left: 15%; }
+  &.node-6 { top: 30%; left: 15%; }
+}
+
+.connections-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  
+  .connection-line {
+    stroke-width: 1;
+    stroke-dasharray: 5, 5;
+    opacity: 0.5;
+    animation: dashMove 20s linear infinite;
+  }
+}
+
+@keyframes dashMove {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+// Paquetes de datos animados
+.data-packet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--packet-color, var(--primary));
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--packet-color, var(--primary));
+  animation: packetFlow 3s ease-in-out infinite;
+}
+
+@keyframes packetFlow {
+  0% {
+    top: 50%;
+    left: 50%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    top: 15%;
+    left: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+}
+
+// Información detallada
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info-section {
+  .info-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    letter-spacing: 1px;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--primary);
+    }
+  }
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+.protocol-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  
+  .protocol-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid;
+    border-radius: 4px;
+    background: transparent;
+    letter-spacing: 0.5px;
+  }
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+  
+  .spec-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    
+    .spec-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .spec-value {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+  }
+}
+
+// Barra de progreso de escaneo
+.scan-progress {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  
+  .scan-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+  
+  .progress-bar {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px var(--glow-color);
+    }
+  }
+  
+  .scan-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    
+    span {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: var(--primary);
+        animation: pulse 1.5s infinite;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// Footer del panel
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  
+  .btn-sentinel {
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}

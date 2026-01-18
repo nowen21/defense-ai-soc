@@ -1,0 +1,138 @@
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Últimas Amenazas Detectadas
+                </h3>
+                <button class="btn-sentinel-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">
+                    <i class="bi bi-eye"></i> Ver todas
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Tipo</th>
+                                <th>IP Origen</th>
+                                <th>Severidad</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-mono" style="font-size: 0.8rem;">2024-01-18 14:32:15
+                                </td>
+                                <td>Intrusión</td>
+                                <td class="font-mono" style="color: var(--danger);">185.234.72.15</td>
+                                <td><span class="badge-status critical">Crítico</span></td>
+                                <td><span class="badge-status warning">Investigando</span></td>
+                                <td>
+                                    <button class="btn-sentinel-secondary"
+                                        style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="font-mono" style="font-size: 0.8rem;">2024-01-18 14:28:42
+                                </td>
+                                <td>DDoS</td>
+                                <td class="font-mono" style="color: var(--warning);">91.121.87.32</td>
+                                <td><span class="badge-status high">Alto</span></td>
+                                <td><span class="badge-status success">Bloqueado</span></td>
+                                <td>
+                                    <button class="btn-sentinel-secondary"
+                                        style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="font-mono" style="font-size: 0.8rem;">2024-01-18 13:55:08
+                                </td>
+                                <td>Escaneo</td>
+                                <td class="font-mono">45.155.205.99</td>
+                                <td><span class="badge-status medium">Medio</span></td>
+                                <td><span class="badge-status success">Resuelto</span></td>
+                                <td>
+                                    <button class="btn-sentinel-secondary"
+                                        style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="bi bi-cpu-fill"></i>
+                    Estado del Modelo ML
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column gap-3">
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="font-mono"
+                                style="font-size: 0.75rem; color: var(--text-muted);">PRECISIÓN</span>
+                            <span class="font-mono" style="font-size: 0.85rem; color: var(--primary);">96.2%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background: var(--bg-tertiary);">
+                            <div class="progress-bar" style="width: 96.2%; background: var(--primary);">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">RECALL</span>
+                            <span class="font-mono" style="font-size: 0.85rem; color: var(--secondary);">94.7%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background: var(--bg-tertiary);">
+                            <div class="progress-bar" style="width: 94.7%; background: var(--secondary);">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="font-mono"
+                                style="font-size: 0.75rem; color: var(--text-muted);">F1-SCORE</span>
+                            <span class="font-mono" style="font-size: 0.85rem; color: var(--warning);">95.4%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background: var(--bg-tertiary);">
+                            <div class="progress-bar" style="width: 95.4%; background: var(--warning);">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 p-3" style="background: var(--bg-tertiary); border-radius: 8px;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="font-mono" style="font-size: 0.65rem; color: var(--text-muted);">LATENCIA
+                                    PROMEDIO</div>
+                                <div class="font-display"
+                                    style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
+                                    47ms</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="font-mono" style="font-size: 0.65rem; color: var(--text-muted);">ÚLTIMO
+                                    ENTRENAMIENTO</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Hace 2
+                                    horas</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
