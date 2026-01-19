@@ -1,0 +1,1 @@
+export type ThreatStatus = 'new' | 'investigating' | 'contained' | 'resolved' | 'false_positive';

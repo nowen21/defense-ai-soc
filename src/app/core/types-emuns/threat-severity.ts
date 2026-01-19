@@ -1,0 +1,1 @@
+export type ThreatSeverity = 'info' | 'low' | 'medium' | 'high' | 'critical';

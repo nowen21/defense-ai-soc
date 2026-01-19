@@ -1,0 +1,15 @@
+export type MitrePhase = 
+  | 'reconnaissance'
+  | 'resource_development'
+  | 'initial_access'
+  | 'execution'
+  | 'persistence'
+  | 'privilege_escalation'
+  | 'defense_evasion'
+  | 'credential_access'
+  | 'discovery'
+  | 'lateral_movement'
+  | 'collection'
+  | 'command_and_control'
+  | 'exfiltration'
+  | 'impact';

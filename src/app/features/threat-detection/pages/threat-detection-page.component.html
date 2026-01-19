@@ -1,0 +1,683 @@
+<div class="threat-detection-page" [class.panel-open]="showDetailPanel()">
+  
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <span class="header-tag font-mono">
+        <mat-icon>gpp_bad</mat-icon>
+        SENTINEL-ML // DETECCIÓN DE AMENAZAS
+      </span>
+      <h1 class="header-title font-display">Centro de Amenazas</h1>
+      <p class="header-subtitle">
+        Monitoreo, detección y respuesta a incidentes de seguridad en tiempo real
+      </p>
+    </div>
+    
+    <div class="header-actions">
+      <button 
+        class="control-btn"
+        [class.active]="isMonitoring()"
+        (click)="toggleMonitoring()"
+        [matTooltip]="isMonitoring() ? 'Detener monitoreo' : 'Iniciar monitoreo'">
+        <mat-icon>{{ isMonitoring() ? 'pause' : 'play_arrow' }}</mat-icon>
+        <span class="btn-label">{{ isMonitoring() ? 'Activo' : 'Inactivo' }}</span>
+      </button>
+      
+      <button 
+        class="control-btn"
+        (click)="clearAllAlerts()"
+        matTooltip="Limpiar alertas">
+        <mat-icon>delete_sweep</mat-icon>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card critical" @pulse>
+      <div class="stat-icon">
+        <mat-icon>dangerous</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value font-display">{{ statistics().criticalCount }}</span>
+        <span class="stat-label font-mono">CRÍTICAS</span>
+      </div>
+      @if (statistics().criticalCount > 0) {
+        <div class="stat-alert-indicator"></div>
+      }
+    </div>
+    
+    <div class="stat-card high">
+      <div class="stat-icon">
+        <mat-icon>error</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value font-display">{{ statistics().highCount }}</span>
+        <span class="stat-label font-mono">ALTAS</span>
+      </div>
+    </div>
+    
+    <div class="stat-card medium">
+      <div class="stat-icon">
+        <mat-icon>warning</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value font-display">{{ statistics().mediumCount }}</span>
+        <span class="stat-label font-mono">MEDIAS</span>
+      </div>
+    </div>
+    
+    <div class="stat-card new">
+      <div class="stat-icon">
+        <mat-icon>fiber_new</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value font-display">{{ alertsByStatus().new }}</span>
+        <span class="stat-label font-mono">NUEVAS</span>
+      </div>
+    </div>
+    
+    <div class="stat-card investigating">
+      <div class="stat-icon">
+        <mat-icon>search</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value font-display">{{ alertsByStatus().investigating }}</span>
+        <span class="stat-label font-mono">INVESTIGANDO</span>
+      </div>
+    </div>
+    
+    <div class="stat-card resolved">
+      <div class="stat-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value font-display">{{ alertsByStatus().resolved }}</span>
+        <span class="stat-label font-mono">RESUELTAS</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="main-content">
+    <!-- Panel de alertas -->
+    <div class="alerts-panel card">
+      <div class="card-header">
+        <div class="header-left">
+          <h3 class="card-title">
+            <mat-icon>notification_important</mat-icon>
+            Alertas de Seguridad
+            <span class="alert-count">({{ filteredAlerts().length }})</span>
+          </h3>
+        </div>
+        
+        <div class="header-right">
+          <!-- Búsqueda -->
+          <div class="search-box">
+            <mat-icon>search</mat-icon>
+            <input 
+              type="text" 
+              placeholder="Buscar IP, título..."
+              [value]="filters().searchTerm"
+              (input)="updateFilter('searchTerm', $any($event.target).value)">
+          </div>
+          
+          <!-- Vista -->
+          <div class="view-toggle">
+            <button 
+              [class.active]="viewMode() === 'list'"
+              (click)="setViewMode('list')"
+              matTooltip="Vista lista">
+              <mat-icon>view_list</mat-icon>
+            </button>
+            <button 
+              [class.active]="viewMode() === 'grid'"
+              (click)="setViewMode('grid')"
+              matTooltip="Vista grid">
+              <mat-icon>grid_view</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Filtros -->
+      <div class="filters-bar">
+        <select 
+          class="filter-select"
+          [value]="filters().severity"
+          (change)="updateFilter('severity', $any($event.target).value)">
+          @for (opt of severityOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        
+        <select 
+          class="filter-select"
+          [value]="filters().status"
+          (change)="updateFilter('status', $any($event.target).value)">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        
+        <select 
+          class="filter-select"
+          [value]="filters().category"
+          (change)="updateFilter('category', $any($event.target).value)">
+          @for (opt of categoryOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        
+        <select 
+          class="filter-select"
+          [value]="filters().timeRange"
+          (change)="updateFilter('timeRange', $any($event.target).value)">
+          @for (opt of timeRangeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        
+        <button class="clear-filters-btn" (click)="clearFilters()" matTooltip="Limpiar filtros">
+          <mat-icon>filter_alt_off</mat-icon>
+        </button>
+      </div>
+      
+      <!-- Lista de alertas -->
+      <div class="alerts-container" [class]="'view-' + viewMode()">
+        @if (viewMode() === 'list') {
+          <div class="alerts-table" @staggerList>
+            @for (alert of filteredAlerts(); track trackByAlertId($index, alert)) {
+              <div 
+                class="alert-row"
+                [class]="getSeverityClass(alert.severity)"
+                [class.selected]="selectedAlert()?.id === alert.id"
+                (click)="selectAlert(alert)"
+                @fadeSlide>
+                
+                <!-- Indicador de severidad -->
+                <div class="severity-indicator" [class]="getSeverityClass(alert.severity)">
+                  <mat-icon>{{ getSeverityIcon(alert.severity) }}</mat-icon>
+                </div>
+                
+                <!-- Contenido principal -->
+                <div class="alert-main">
+                  <div class="alert-header">
+                    <span class="alert-title">{{ alert.title }}</span>
+                    <span class="alert-time font-mono">{{ formatTimeAgo(alert.timestamp) }}</span>
+                  </div>
+                  
+                  <div class="alert-meta">
+                    <span class="category-badge">
+                      <mat-icon>{{ getCategoryIcon(alert.category) }}</mat-icon>
+                      {{ getCategoryLabel(alert.category) }}
+                    </span>
+                    
+                    <span class="ip-info font-mono">
+                      {{ alert.sourceIP }} → {{ alert.destinationIP }}
+                    </span>
+                    
+                    @if (alert.mitreTechniqueId) {
+                      <span class="mitre-badge font-mono">
+                        {{ alert.mitreTechniqueId }}
+                      </span>
+                    }
+                  </div>
+                </div>
+                
+                <!-- ML Score -->
+                <div class="ml-score" [class]="getSeverityClass(alert.severity)">
+                  <span class="score-value font-display">{{ alert.mlScore }}</span>
+                  <span class="score-label font-mono">ML</span>
+                </div>
+                
+                <!-- Status -->
+                <div class="alert-status">
+                  <span class="status-badge" [class]="getStatusClass(alert.status)">
+                    <mat-icon>{{ getStatusIcon(alert.status) }}</mat-icon>
+                    {{ getStatusLabel(alert.status) }}
+                  </span>
+                </div>
+                
+                <!-- Acciones rápidas -->
+                <div class="alert-actions">
+                  <button 
+                    class="action-btn"
+                    [matMenuTriggerFor]="alertMenu"
+                    (click)="$event.stopPropagation()">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  
+                  <mat-menu #alertMenu="matMenu">
+                    <button mat-menu-item (click)="updateAlertStatus(alert.id, 'investigating')">
+                      <mat-icon>search</mat-icon>
+                      <span>Investigar</span>
+                    </button>
+                    <button mat-menu-item (click)="blockSourceIP(alert)">
+                      <mat-icon>block</mat-icon>
+                      <span>Bloquear IP</span>
+                    </button>
+                    <button mat-menu-item (click)="escalateAlert(alert.id)">
+                      <mat-icon>priority_high</mat-icon>
+                      <span>Escalar</span>
+                    </button>
+                    <button mat-menu-item (click)="markAsFalsePositive(alert.id)">
+                      <mat-icon>cancel</mat-icon>
+                      <span>Falso Positivo</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </div>
+            } @empty {
+              <div class="empty-state">
+                <mat-icon>shield</mat-icon>
+                <span class="empty-title">Sin alertas</span>
+                <span class="empty-text">No hay alertas que coincidan con los filtros</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Vista Grid -->
+          <div class="alerts-grid">
+            @for (alert of filteredAlerts(); track trackByAlertId($index, alert)) {
+              <div 
+                class="alert-card"
+                [class]="getSeverityClass(alert.severity)"
+                (click)="selectAlert(alert)"
+                @fadeSlide>
+                
+                <div class="card-header">
+                  <div class="severity-badge" [class]="getSeverityClass(alert.severity)">
+                    <mat-icon>{{ getSeverityIcon(alert.severity) }}</mat-icon>
+                    {{ getSeverityLabel(alert.severity) }}
+                  </div>
+                  <span class="card-time font-mono">{{ formatTimeAgo(alert.timestamp) }}</span>
+                </div>
+                
+                <h4 class="card-title">{{ alert.title }}</h4>
+                
+                <div class="card-meta">
+                  <span class="category">
+                    <mat-icon>{{ getCategoryIcon(alert.category) }}</mat-icon>
+                    {{ getCategoryLabel(alert.category) }}
+                  </span>
+                  <span class="ml-score font-mono">ML: {{ alert.mlScore }}%</span>
+                </div>
+                
+                <div class="card-ips font-mono">
+                  <span>{{ alert.sourceIP }}</span>
+                  <mat-icon>arrow_forward</mat-icon>
+                  <span>{{ alert.destinationIP }}</span>
+                </div>
+                
+                <div class="card-footer">
+                  <span class="status-badge" [class]="getStatusClass(alert.status)">
+                    {{ getStatusLabel(alert.status) }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+    
+    <!-- Panel lateral: Componentes conectados -->
+    <div class="side-panel">
+      <!-- Alertas críticas -->
+      @if (criticalAlerts().length > 0) {
+        <div class="critical-alerts-card card">
+          <div class="card-header critical">
+            <mat-icon>dangerous</mat-icon>
+            <h3 class="card-title">Alertas Críticas</h3>
+            <span class="critical-count">{{ criticalAlerts().length }}</span>
+          </div>
+          <div class="card-body">
+            @for (alert of criticalAlerts().slice(0, 3); track alert.id) {
+              <div class="critical-alert-item" (click)="selectAlert(alert)">
+                <mat-icon>{{ getCategoryIcon(alert.category) }}</mat-icon>
+                <div class="alert-info">
+                  <span class="alert-title">{{ alert.title }}</span>
+                  <span class="alert-time font-mono">{{ formatTimeAgo(alert.timestamp) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      
+      <!-- Componentes conectados -->
+      <div class="connected-card card">
+        <div class="card-header">
+          <mat-icon>hub</mat-icon>
+          <h3 class="card-title">Componentes Conectados</h3>
+        </div>
+        <div class="card-body">
+          <div class="components-list">
+            @for (component of connectedComponents; track trackByComponentId($index, component)) {
+              <a 
+                class="component-item"
+                [routerLink]="component.route"
+                [class.active]="component.status === 'active'">
+                <div class="component-icon">
+                  <mat-icon>{{ component.icon }}</mat-icon>
+                </div>
+                <div class="component-info">
+                  <span class="component-name">{{ component.name }}</span>
+                  <span class="component-flow">
+                    <mat-icon>{{ getDataFlowIcon(component.dataFlow) }}</mat-icon>
+                    {{ component.dataTypes.slice(0, 2).join(', ') }}
+                  </span>
+                </div>
+                <div class="component-status">
+                  <span class="status-dot" [class]="component.status"></span>
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+      
+      <!-- Top MITRE Tactics -->
+      <div class="mitre-card card">
+        <div class="card-header">
+          <mat-icon>account_tree</mat-icon>
+          <h3 class="card-title">Top Tácticas MITRE</h3>
+        </div>
+        <div class="card-body">
+          @if (statistics().topMitreTactics.length > 0) {
+            <div class="tactics-list">
+              @for (item of statistics().topMitreTactics; track item.tactic) {
+                <div class="tactic-item">
+                  <span class="tactic-name">{{ getMitreTacticLabel(item.tactic) }}</span>
+                  <span class="tactic-count font-mono">{{ item.count }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-mini">Sin datos suficientes</div>
+          }
+        </div>
+      </div>
+      
+      <!-- Top IPs Atacantes -->
+      <div class="ips-card card">
+        <div class="card-header">
+          <mat-icon>gps_fixed</mat-icon>
+          <h3 class="card-title">Top IPs Origen</h3>
+        </div>
+        <div class="card-body">
+          @if (statistics().topSourceIPs.length > 0) {
+            <div class="ips-list">
+              @for (item of statistics().topSourceIPs; track item.ip) {
+                <div class="ip-item">
+                  <span class="ip-value font-mono">{{ item.ip }}</span>
+                  <span class="ip-count font-mono">{{ item.count }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-mini">Sin datos suficientes</div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Panel de detalle de alerta -->
+  @if (showDetailPanel() && selectedAlert(); as alert) {
+    <div class="detail-overlay" (click)="closeDetailPanel()"></div>
+    <div class="detail-panel" @slidePanel>
+      <div class="detail-header" [class]="getSeverityClass(alert.severity)">
+        <div class="header-top">
+          <div class="severity-badge" [class]="getSeverityClass(alert.severity)">
+            <mat-icon>{{ getSeverityIcon(alert.severity) }}</mat-icon>
+            {{ getSeverityLabel(alert.severity) | uppercase }}
+          </div>
+          <button class="close-btn" (click)="closeDetailPanel()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <h2 class="detail-title">{{ alert.title }}</h2>
+        <div class="detail-meta">
+          <span class="category">
+            <mat-icon>{{ getCategoryIcon(alert.category) }}</mat-icon>
+            {{ getCategoryLabel(alert.category) }}
+          </span>
+          <span class="time font-mono">{{ alert.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+        </div>
+      </div>
+      
+      <div class="detail-body">
+        <!-- Status y acciones -->
+        <div class="status-section">
+          <div class="current-status">
+            <span class="label">Estado actual:</span>
+            <span class="status-badge large" [class]="getStatusClass(alert.status)">
+              <mat-icon>{{ getStatusIcon(alert.status) }}</mat-icon>
+              {{ getStatusLabel(alert.status) }}
+            </span>
+          </div>
+          
+          <div class="status-actions">
+            <button 
+              class="action-btn"
+              [class.active]="alert.status === 'investigating'"
+              (click)="updateAlertStatus(alert.id, 'investigating')">
+              <mat-icon>search</mat-icon>
+              Investigar
+            </button>
+            <button 
+              class="action-btn"
+              [class.active]="alert.status === 'contained'"
+              (click)="updateAlertStatus(alert.id, 'contained')">
+              <mat-icon>shield</mat-icon>
+              Contener
+            </button>
+            <button 
+              class="action-btn"
+              [class.active]="alert.status === 'resolved'"
+              (click)="updateAlertStatus(alert.id, 'resolved')">
+              <mat-icon>check_circle</mat-icon>
+              Resolver
+            </button>
+          </div>
+        </div>
+        
+        <!-- Descripción -->
+        <div class="section">
+          <h4 class="section-title font-mono">
+            <mat-icon>description</mat-icon>
+            DESCRIPCIÓN
+          </h4>
+          <p class="description">{{ alert.description }}</p>
+        </div>
+        
+        <!-- IPs involucradas -->
+        <div class="section">
+          <h4 class="section-title font-mono">
+            <mat-icon>device_hub</mat-icon>
+            CONEXIÓN
+          </h4>
+          <div class="connection-diagram">
+            <div class="endpoint source">
+              <span class="endpoint-label">Origen</span>
+              <span class="endpoint-ip font-mono">{{ alert.sourceIP }}</span>
+              @if (alert.sourcePort) {
+                <span class="endpoint-port font-mono">:{{ alert.sourcePort }}</span>
+              }
+              @if (alert.sourceGeo) {
+                <span class="endpoint-geo">{{ alert.sourceGeo }}</span>
+              }
+            </div>
+            <div class="connection-arrow">
+              <mat-icon>arrow_forward</mat-icon>
+            </div>
+            <div class="endpoint destination">
+              <span class="endpoint-label">Destino</span>
+              <span class="endpoint-ip font-mono">{{ alert.destinationIP }}</span>
+              @if (alert.destinationPort) {
+                <span class="endpoint-port font-mono">:{{ alert.destinationPort }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        
+        <!-- ML Analysis -->
+        <div class="section">
+          <h4 class="section-title font-mono">
+            <mat-icon>psychology</mat-icon>
+            ANÁLISIS ML
+          </h4>
+          <div class="ml-analysis">
+            <div class="ml-stat">
+              <span class="ml-label">Score</span>
+              <span class="ml-value" [class]="getSeverityClass(alert.severity)">{{ alert.mlScore }}%</span>
+            </div>
+            <div class="ml-stat">
+              <span class="ml-label">Confianza</span>
+              <span class="ml-value">{{ (alert.confidence * 100).toFixed(1) }}%</span>
+            </div>
+            <div class="ml-stat">
+              <span class="ml-label">Modelo</span>
+              <span class="ml-value font-mono">{{ alert.mlModel }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- MITRE ATT&CK -->
+        @if (alert.mitreTactic) {
+          <div class="section">
+            <h4 class="section-title font-mono">
+              <mat-icon>account_tree</mat-icon>
+              MITRE ATT&CK
+            </h4>
+            <div class="mitre-info">
+              <div class="mitre-item">
+                <span class="mitre-label">Táctica</span>
+                <span class="mitre-value">{{ getMitreTacticLabel(alert.mitreTactic) }}</span>
+              </div>
+              @if (alert.mitreTechnique) {
+                <div class="mitre-item">
+                  <span class="mitre-label">Técnica</span>
+                  <span class="mitre-value">{{ alert.mitreTechnique }}</span>
+                </div>
+              }
+              @if (alert.mitreTechniqueId) {
+                <div class="mitre-item">
+                  <span class="mitre-label">ID</span>
+                  <a class="mitre-link font-mono" [href]="'https://attack.mitre.org/techniques/' + alert.mitreTechniqueId" target="_blank">
+                    {{ alert.mitreTechniqueId }}
+                    <mat-icon>open_in_new</mat-icon>
+                  </a>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        
+        <!-- IOCs -->
+        @if (alert.iocs.length > 0) {
+          <div class="section">
+            <h4 class="section-title font-mono">
+              <mat-icon>fingerprint</mat-icon>
+              INDICADORES (IOCs)
+            </h4>
+            <div class="iocs-list">
+              @for (ioc of alert.iocs; track ioc.id) {
+                <div class="ioc-item">
+                  <span class="ioc-type">{{ ioc.type | uppercase }}</span>
+                  <span class="ioc-value font-mono">{{ ioc.value }}</span>
+                  <button 
+                    class="ioc-action"
+                    [class.blocked]="ioc.isBlocked"
+                    (click)="ioc.isBlocked ? null : threatService.blockIOC(ioc.id)">
+                    <mat-icon>{{ ioc.isBlocked ? 'block' : 'add_circle' }}</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        
+        <!-- Acciones de respuesta -->
+        <div class="section">
+          <h4 class="section-title font-mono">
+            <mat-icon>flash_on</mat-icon>
+            ACCIONES DE RESPUESTA
+          </h4>
+          <div class="response-actions">
+            <button class="response-btn danger" (click)="blockSourceIP(alert)">
+              <mat-icon>block</mat-icon>
+              Bloquear IP Origen
+            </button>
+            <button class="response-btn warning" (click)="isolateHost(alert)">
+              <mat-icon>lan_disconnect</mat-icon>
+              Aislar Host
+            </button>
+            <button class="response-btn" (click)="escalateAlert(alert.id)">
+              <mat-icon>priority_high</mat-icon>
+              Escalar
+            </button>
+          </div>
+        </div>
+        
+        <!-- Notas -->
+        <div class="section">
+          <h4 class="section-title font-mono">
+            <mat-icon>notes</mat-icon>
+            NOTAS ({{ alert.notes.length }})
+          </h4>
+          
+          <div class="notes-list">
+            @for (note of alert.notes; track note.id) {
+              <div class="note-item">
+                <div class="note-header">
+                  <span class="note-author">{{ note.author }}</span>
+                  <span class="note-time font-mono">{{ note.timestamp | date:'dd/MM HH:mm' }}</span>
+                </div>
+                <p class="note-content">{{ note.content }}</p>
+              </div>
+            } @empty {
+              <div class="empty-notes">Sin notas</div>
+            }
+          </div>
+          
+          <div class="add-note">
+            <textarea 
+              placeholder="Agregar nota..."
+              [value]="newNoteContent()"
+              (input)="updateNoteContent($any($event.target).value)">
+            </textarea>
+            <button 
+              class="add-note-btn"
+              [disabled]="!newNoteContent().trim()"
+              (click)="addNote()">
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Historial de acciones -->
+        @if (alert.actions.length > 0) {
+          <div class="section">
+            <h4 class="section-title font-mono">
+              <mat-icon>history</mat-icon>
+              HISTORIAL DE ACCIONES
+            </h4>
+            <div class="actions-history">
+              @for (action of alert.actions; track action.id) {
+                <div class="action-item" [class]="action.status">
+                  <mat-icon>{{ action.status === 'completed' ? 'check_circle' : action.status === 'failed' ? 'error' : 'hourglass_empty' }}</mat-icon>
+                  <div class="action-content">
+                    <span class="action-desc">{{ action.description }}</span>
+                    <span class="action-time font-mono">{{ action.timestamp | date:'HH:mm:ss' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

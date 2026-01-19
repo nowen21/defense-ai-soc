@@ -3,6 +3,7 @@ import { NetworkFlow, FlowDirection, FlowStatus, ThreatType, FlowProtocol } from
 import { NetworkConfigStore } from '../state/network-config.store';
 import { MonitorStore } from '../state/monitor.store';
 import { FlowProtocolsService } from './flow-protocols.service';
+import { ThreatDetectionService } from '../../../core/services/threat-detection.service';
 
 @Injectable({ providedIn: 'root' })
 export class FlowSimulatorService {
@@ -10,6 +11,7 @@ export class FlowSimulatorService {
     private configStore = inject(NetworkConfigStore);
     private monitorStore = inject(MonitorStore);
     private protocolsService = inject(FlowProtocolsService);
+    private readonly threatDetectionService = inject(ThreatDetectionService);
 
     private readonly _flows = signal<NetworkFlow[]>([]);
 
@@ -50,6 +52,24 @@ export class FlowSimulatorService {
     // CORE
     // ─────────────────────────────────────────────
 
+    processFlowForThreatAlert(flow: NetworkFlow): void {
+        if (flow.threatScore < 50) {
+            return;
+        }
+
+        this.threatDetectionService.createAlertFromFlow({
+            id: flow.id,
+            sourceIP: flow.sourceIP,
+            sourcePort: flow.sourcePort,
+            destinationIP: flow.destinationIP,
+            destinationPort: flow.destinationPort,
+            protocol: flow.protocol,
+            threatType: flow.threatType,
+            threatScore: flow.threatScore,
+            mlPrediction: flow.mlPrediction
+        });
+    }
+
     public generateFlow(): void {
         const flow = this.createRandomFlow();
 
@@ -59,6 +79,10 @@ export class FlowSimulatorService {
         });
 
         this.monitorStore.setFlows(this._flows());
+        // ═══════════════════════════════════════════════════════════
+        // Enviar a Threat Detection si es sospechoso
+        // ═══════════════════════════════════════════════════════════
+        this.processFlowForThreatAlert(flow);
     }
 
     private createRandomFlow(): NetworkFlow {

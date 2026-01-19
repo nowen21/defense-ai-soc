@@ -1,0 +1,15 @@
+export type ThreatCategory = 
+  | 'malware' 
+  | 'ransomware' 
+  | 'phishing' 
+  | 'apt' 
+  | 'ddos' 
+  | 'brute_force' 
+  | 'data_exfiltration' 
+  | 'insider_threat'
+  | 'port_scan'
+  | 'privilege_escalation'
+  | 'lateral_movement'
+  | 'c2_communication'
+  | 'anomaly'
+  | 'policy_violation';
