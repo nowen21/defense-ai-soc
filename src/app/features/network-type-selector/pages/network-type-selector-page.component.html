@@ -1,34 +1,64 @@
-<div class="network-type-container">
+<div class="defense-network-container">
   
-  <!-- Header de la sección -->
+  <!-- Encabezado de seguridad -->
+  <div class="security-header">
+    <div class="classification-banner" [class]="'classification-' + selectedClassification()">
+      <mat-icon>{{ getClasificacionInfo(selectedClassification())?.icon }}</mat-icon>
+      <span class="classification-text">
+        NIVEL DE CLASIFICACIÓN: {{ getClasificacionInfo(selectedClassification())?.label | uppercase }}
+      </span>
+      <mat-icon>{{ getClasificacionInfo(selectedClassification())?.icon }}</mat-icon>
+    </div>
+  </div>
+  
+  <!-- Header de página -->
   <div class="page-header">
-    <span class="page-header-tag">Configuración de Red</span>
-    <h1 class="page-header-title">Definir Tipo de Red</h1>
+    <span class="page-header-tag font-mono">
+      <mat-icon>shield</mat-icon>
+      CONFIGURACIÓN SENTINEL-ML // MODO DEFENSA
+    </span>
+    <h1 class="page-header-title font-display">Selección de Entorno de Red</h1>
     <p class="page-header-subtitle">
-      Seleccione el tipo de red que desea monitorear. SENTINEL-ML ajustará sus 
-      algoritmos de detección según la topología seleccionada.
+      Sistema de Detección Inteligente de Amenazas para Redes de Telecomunicaciones Militares.
+      Seleccione el tipo de infraestructura a proteger.
     </p>
   </div>
   
   <!-- Estado de configuración -->
-  <div class="config-status" [class.configured]="isConfigured()">
-    <div class="status-indicator">
-      <span class="status-dot" [class.active]="isConfigured()"></span>
-      <span class="status-text font-mono">
-        {{ isConfigured() ? 'RED CONFIGURADA' : 'PENDIENTE CONFIGURACIÓN' }}
-      </span>
+  <div class="config-status card" [class.configured]="isConfigured()">
+    <div class="status-left">
+      <div class="status-indicator">
+        <span class="status-dot" [class.active]="isConfigured()" [class.scanning]="isScanning()"></span>
+        <span class="status-text font-mono">
+          @if (isScanning()) {
+            ESCANEANDO RED...
+          } @else if (isConfigured()) {
+            RED CONFIGURADA // {{ selectedNetwork()?.nombreCorto }}
+          } @else {
+            ESPERANDO CONFIGURACIÓN
+          }
+        </span>
+      </div>
+      
+      @if (isScanning()) {
+        <div class="scan-mini-stats font-mono">
+          <span><mat-icon>devices</mat-icon> {{ devicesFound() }} dispositivos</span>
+          <span><mat-icon>warning</mat-icon> {{ threatsDetected() }} alertas</span>
+        </div>
+      }
     </div>
-    @if (isConfigured()) {
+    
+    @if (isConfigured() && !isScanning()) {
       <button class="btn-sentinel btn-sentinel-secondary" (click)="clearSelection()">
-        <i class="bi bi-arrow-counterclockwise"></i>
-        Cambiar
+        <mat-icon>refresh</mat-icon>
+        Reconfigurar
       </button>
     }
   </div>
   
-  <!-- Grid de tipos de red -->
+  <!-- Grid de tipos de red de defensa -->
   <div class="network-grid" @staggerIn>
-    @for (network of networkTypes; track trackByNetworkId($index, network)) {
+    @for (network of networkTypes; track network.id) {
       <div 
         class="network-card card"
         [class.selected]="selectedNetwork()?.id === network.id"
@@ -36,15 +66,19 @@
         [@selectAnimation]="selectedNetwork()?.id === network.id ? 'selected' : 'unselected'"
         (click)="selectNetwork(network)">
         
-        <!-- Barra superior de color -->
+        <!-- Clasificación badge -->
+        <div class="classification-badge" [style.background]="getClasificacionInfo(network.clasificacion)?.color">
+          {{ getClasificacionInfo(network.clasificacion)?.label }}
+        </div>
+        
+        <!-- Barra de acento -->
         <div class="card-accent-bar" [style.background]="network.color"></div>
         
-        <!-- Icono animado -->
+        <!-- Icono -->
         <div class="network-icon-wrapper">
           <div class="network-icon" [style.background]="network.color + '20'" [style.color]="network.color">
             <mat-icon>{{ network.icon }}</mat-icon>
           </div>
-          <div class="icon-ring" [style.border-color]="network.color"></div>
           @if (selectedNetwork()?.id === network.id) {
             <div class="icon-pulse" [style.background]="network.color"></div>
           }
@@ -52,133 +86,139 @@
         
         <!-- Contenido -->
         <div class="network-content">
-          <h3 class="network-name">{{ network.nombre }}</h3>
+          <div class="network-name-row">
+            <h3 class="network-name">{{ network.nombre }}</h3>
+            <span class="network-code font-mono">{{ network.nombreCorto }}</span>
+          </div>
           <p class="network-description">{{ network.descripcion }}</p>
           
-          <!-- Stats rápidas -->
-          <div class="network-quick-stats">
-            <div class="quick-stat">
-              <mat-icon>devices</mat-icon>
-              <span>{{ network.dispositivos }}+ dispositivos</span>
-            </div>
-            <div class="quick-stat">
-              <mat-icon>speed</mat-icon>
-              <span>{{ network.velocidad }}</span>
-            </div>
+          <!-- Entorno y riesgo -->
+          <div class="network-meta">
+            <span class="meta-tag entorno">
+              <mat-icon>category</mat-icon>
+              {{ network.entorno | titlecase }}
+            </span>
+            <span class="meta-tag risk" [class]="'risk-' + network.nivelRiesgo">
+              <mat-icon>{{ network.nivelRiesgo === 'critico' ? 'error' : 'warning' }}</mat-icon>
+              Riesgo {{ network.nivelRiesgo | titlecase }}
+            </span>
           </div>
           
-          <!-- Badge de riesgo -->
-          <div class="network-risk">
-            <span class="badge-status" [class]="getRiskClass(network.riesgo)">
-              <mat-icon>{{ network.riesgo === 'alto' ? 'warning' : 'shield' }}</mat-icon>
-              Riesgo {{ getRiskLabel(network.riesgo) }}
-            </span>
+          <!-- Amenazas prioritarias (preview) -->
+          <div class="threats-preview">
+            <span class="threats-label font-mono">AMENAZAS PRIORITARIAS:</span>
+            <div class="threats-icons">
+              @for (threat of network.amenazasPrioritarias.slice(0, 3); track threat.id) {
+                <span 
+                  class="threat-icon" 
+                  [matTooltip]="threat.nombre"
+                  [class]="'severity-' + threat.severidad">
+                  <mat-icon>{{ getThreatCategoryIcon(threat.categoria) }}</mat-icon>
+                </span>
+              }
+              @if (network.amenazasPrioritarias.length > 3) {
+                <span class="threat-more">+{{ network.amenazasPrioritarias.length - 3 }}</span>
+              }
+            </div>
           </div>
         </div>
         
         <!-- Indicador de selección -->
         <div class="selection-indicator" [class.active]="selectedNetwork()?.id === network.id">
-          <mat-icon>check_circle</mat-icon>
+          <mat-icon>verified_user</mat-icon>
         </div>
       </div>
     }
   </div>
   
-  <!-- Panel de detalles de red seleccionada -->
+  <!-- Panel de detalles -->
   @if (selectedNetwork(); as network) {
-    <div class="detail-panel card" @slideIn>
+    <div class="detail-panel card" @slidePanel>
       <div class="card-header">
-        <h3 class="card-title">
-          <mat-icon [style.color]="network.color">{{ network.icon }}</mat-icon>
-          {{ network.nombre }} - Detalles de Configuración
-        </h3>
-        <span class="badge-status" [class]="getRiskClass(network.riesgo)">
-          Riesgo {{ getRiskLabel(network.riesgo) }}
-        </span>
+        <div class="header-left">
+          <div class="network-badge" [style.background]="network.color">
+            <mat-icon>{{ network.icon }}</mat-icon>
+          </div>
+          <div class="header-info">
+            <h3 class="card-title">{{ network.nombre }}</h3>
+            <span class="card-subtitle font-mono">{{ network.nombreCorto }} // {{ network.entorno | uppercase }}</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="classification-tag" [style.background]="getClasificacionInfo(network.clasificacion)?.color">
+            <mat-icon>{{ getClasificacionInfo(network.clasificacion)?.icon }}</mat-icon>
+            {{ getClasificacionInfo(network.clasificacion)?.label }}
+          </span>
+        </div>
       </div>
       
       <div class="card-body">
-        <div class="detail-grid">
-          
-          <!-- Visualización de red -->
-          <div class="network-visualization">
-            <div class="visualization-header font-mono">
-              <mat-icon>account_tree</mat-icon>
-              TOPOLOGÍA DE RED
+        <!-- Barra de escaneo -->
+        @if (isScanning()) {
+          <div class="scan-progress-section">
+            <div class="scan-header">
+              <span class="scan-phase font-mono">{{ scanPhase() }}</span>
+              <span class="scan-percent font-display">{{ scanProgress() }}%</span>
             </div>
-            <div class="topology-canvas">
-              <!-- Nodos animados -->
-              <div class="topology-nodes">
-                <!-- Nodo central -->
-                <div class="topo-node central" @nodeAnimation [style.--node-color]="network.color">
-                  <mat-icon>{{ network.icon }}</mat-icon>
-                  <span>Core</span>
-                </div>
-                
-                <!-- Nodos periféricos -->
-                @for (i of [1,2,3,4,5,6]; track i) {
-                  <div 
-                    class="topo-node peripheral" 
-                    [class]="'node-' + i"
-                    [style.--node-color]="network.color"
-                    [style.animation-delay]="(i * 100) + 'ms'"
-                    @nodeAnimation>
-                    <mat-icon>{{ getPeripheralIcon(i) }}</mat-icon>
-                  </div>
-                }
-                
-                <!-- Conexiones SVG -->
-                <svg class="connections-svg" viewBox="0 0 300 200">
-                  @for (i of [1,2,3,4,5,6]; track i) {
-                    <line 
-                      class="connection-line"
-                      [attr.x1]="150"
-                      [attr.y1]="100"
-                      [attr.x2]="getNodeX(i)"
-                      [attr.y2]="getNodeY(i)"
-                      [style.stroke]="network.color"
-                      @connectionAnimation />
-                  }
-                </svg>
-                
-                <!-- Paquetes animados -->
-                @for (i of [1,2,3]; track i) {
-                  <div 
-                    class="data-packet"
-                    [style.--packet-color]="network.color"
-                    [style.animation-delay]="(i * 500) + 'ms'">
-                  </div>
-                }
+            <div class="progress-bar">
+              <div 
+                class="progress-fill" 
+                [style.width.%]="scanProgress()"
+                [style.background]="'linear-gradient(90deg, ' + network.color + ', ' + network.color + '80)'">
+                <div class="progress-glow"></div>
+              </div>
+            </div>
+            <div class="scan-stats">
+              <div class="scan-stat">
+                <mat-icon [style.color]="network.color">devices</mat-icon>
+                <span class="stat-value font-display">{{ devicesFound() }}</span>
+                <span class="stat-label font-mono">DISPOSITIVOS</span>
+              </div>
+              <div class="scan-stat">
+                <mat-icon [style.color]="threatsDetected() > 0 ? 'var(--danger)' : network.color">
+                  {{ threatsDetected() > 0 ? 'warning' : 'check_circle' }}
+                </mat-icon>
+                <span class="stat-value font-display" [class.danger]="threatsDetected() > 0">
+                  {{ threatsDetected() }}
+                </span>
+                <span class="stat-label font-mono">ALERTAS</span>
+              </div>
+              <div class="scan-stat">
+                <mat-icon [style.color]="network.color">psychology</mat-icon>
+                <span class="stat-value font-display">{{ network.modelosML.length }}</span>
+                <span class="stat-label font-mono">MODELOS ML</span>
               </div>
             </div>
           </div>
-          
-          <!-- Información detallada -->
-          <div class="detail-info" @listStagger>
+        }
+        
+        <div class="detail-grid">
+          <!-- Columna izquierda: Características y protocolos -->
+          <div class="detail-column">
             <!-- Características -->
-            <div class="info-section">
-              <h4 class="info-title font-mono">
+            <div class="detail-section">
+              <h4 class="section-title font-mono">
                 <mat-icon>checklist</mat-icon>
-                CARACTERÍSTICAS
+                CAPACIDADES DEL SISTEMA
               </h4>
               <ul class="feature-list">
-                @for (caracteristica of network.caracteristicas; track caracteristica) {
+                @for (feature of network.caracteristicas; track feature) {
                   <li class="feature-item">
                     <mat-icon [style.color]="network.color">check</mat-icon>
-                    {{ caracteristica }}
+                    {{ feature }}
                   </li>
                 }
               </ul>
             </div>
             
-            <!-- Protocolos -->
-            <div class="info-section">
-              <h4 class="info-title font-mono">
+            <!-- Protocolos militares -->
+            <div class="detail-section">
+              <h4 class="section-title font-mono">
                 <mat-icon>code</mat-icon>
-                PROTOCOLOS SOPORTADOS
+                PROTOCOLOS MILITARES
               </h4>
               <div class="protocol-tags">
-                @for (protocolo of network.protocolos; track protocolo) {
+                @for (protocolo of network.protocolosMilitares; track protocolo) {
                   <span class="protocol-tag" [style.border-color]="network.color" [style.color]="network.color">
                     {{ protocolo }}
                   </span>
@@ -186,57 +226,126 @@
               </div>
             </div>
             
-            <!-- Especificaciones -->
-            <div class="info-section">
-              <h4 class="info-title font-mono">
-                <mat-icon>info</mat-icon>
-                ESPECIFICACIONES
+            <!-- Estándares -->
+            <div class="detail-section">
+              <h4 class="section-title font-mono">
+                <mat-icon>verified</mat-icon>
+                CUMPLIMIENTO NORMATIVO
               </h4>
-              <div class="specs-grid">
-                <div class="spec-item">
-                  <span class="spec-label">Dispositivos</span>
-                  <span class="spec-value font-display" [style.color]="network.color">
-                    {{ network.dispositivos }}+
-                  </span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-label">Velocidad</span>
-                  <span class="spec-value font-display" [style.color]="network.color">
-                    {{ network.velocidad }}
-                  </span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-label">Cobertura</span>
-                  <span class="spec-value font-display" [style.color]="network.color">
-                    {{ network.cobertura }}
-                  </span>
-                </div>
+              <div class="standards-list">
+                @for (standard of network.estandares; track standard) {
+                  <span class="standard-badge">{{ standard }}</span>
+                }
+              </div>
+            </div>
+          </div>
+          
+          <!-- Columna derecha: Amenazas y ML -->
+          <div class="detail-column">
+            <!-- Amenazas prioritarias -->
+            <div class="detail-section threats-section">
+              <h4 class="section-title font-mono">
+                <mat-icon>gpp_bad</mat-icon>
+                AMENAZAS PRIORITARIAS
+              </h4>
+              <div class="threats-list">
+                @for (threat of network.amenazasPrioritarias; track threat.id) {
+                  <div class="threat-card" [class]="'severity-' + threat.severidad" @threatPulse>
+                    <div class="threat-header">
+                      <mat-icon>{{ getThreatCategoryIcon(threat.categoria) }}</mat-icon>
+                      <span class="threat-name">{{ threat.nombre }}</span>
+                      <span class="threat-severity badge-status" [class]="threat.severidad === 'critica' ? 'critical' : threat.severidad === 'alta' ? 'high' : 'medium'">
+                        {{ threat.severidad | uppercase }}
+                      </span>
+                    </div>
+                    <p class="threat-description">{{ threat.descripcion }}</p>
+                    <div class="threat-mitre">
+                      <span class="mitre-label">MITRE ATT&CK:</span>
+                      @for (tactica of threat.tacticasMITRE; track tactica) {
+                        <span class="mitre-tag">{{ tactica }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <!-- Modelos ML -->
+            <div class="detail-section ml-section">
+              <h4 class="section-title font-mono">
+                <mat-icon>psychology</mat-icon>
+                MODELOS DE MACHINE LEARNING
+              </h4>
+              <div class="ml-models-list">
+                @for (model of network.modelosML; track model.id) {
+                  <div class="ml-model-card">
+                    <div class="model-header">
+                      <span class="model-name">{{ model.nombre }}</span>
+                      <span class="model-type badge-status success">{{ model.tipo | uppercase }}</span>
+                    </div>
+                    <p class="model-description">{{ model.descripcion }}</p>
+                    <div class="model-stats">
+                      <div class="model-stat">
+                        <span class="stat-label">Precisión</span>
+                        <span class="stat-value" [style.color]="network.color">{{ model.precision }}%</span>
+                      </div>
+                      <div class="model-stat">
+                        <span class="stat-label">Latencia</span>
+                        <span class="stat-value">{{ model.latencia }}</span>
+                      </div>
+                      <div class="model-stat">
+                        <span class="stat-label">Estado</span>
+                        <span class="stat-value active">
+                          <mat-icon>check_circle</mat-icon> Activo
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
           </div>
         </div>
         
-        <!-- Barra de progreso de escaneo -->
-        @if (isScanning()) {
-          <div class="scan-progress">
-            <div class="scan-header">
-              <span class="font-mono">ESCANEANDO RED...</span>
-              <span class="font-mono">{{ scanProgress() }}%</span>
+        <!-- Especificaciones técnicas -->
+        <div class="specs-section">
+          <h4 class="section-title font-mono">
+            <mat-icon>tune</mat-icon>
+            ESPECIFICACIONES TÉCNICAS
+          </h4>
+          <div class="specs-grid">
+            <div class="spec-card">
+              <mat-icon [style.color]="network.color">devices</mat-icon>
+              <span class="spec-value font-display">{{ network.dispositivos }}+</span>
+              <span class="spec-label font-mono">DISPOSITIVOS</span>
             </div>
-            <div class="progress-bar">
-              <div 
-                class="progress-fill" 
-                [style.width.%]="scanProgress()"
-                [style.background]="'linear-gradient(90deg, ' + network.color + ', ' + network.color + '80)'">
-              </div>
+            <div class="spec-card">
+              <mat-icon [style.color]="network.color">speed</mat-icon>
+              <span class="spec-value font-display">{{ network.velocidad }}</span>
+              <span class="spec-label font-mono">VELOCIDAD</span>
             </div>
-            <div class="scan-details font-mono">
-              <span><mat-icon>search</mat-icon> Detectando dispositivos</span>
-              <span><mat-icon>router</mat-icon> Mapeando topología</span>
-              <span><mat-icon>security</mat-icon> Evaluando seguridad</span>
+            <div class="spec-card">
+              <mat-icon [style.color]="network.color">public</mat-icon>
+              <span class="spec-value font-display">{{ network.cobertura }}</span>
+              <span class="spec-label font-mono">COBERTURA</span>
+            </div>
+            <div class="spec-card">
+              <mat-icon [style.color]="network.color">timer</mat-icon>
+              <span class="spec-value font-display">{{ network.latenciaMaxima }}</span>
+              <span class="spec-label font-mono">LATENCIA MÁX</span>
+            </div>
+            <div class="spec-card">
+              <mat-icon [style.color]="network.color">verified</mat-icon>
+              <span class="spec-value font-display">{{ network.disponibilidadRequerida }}</span>
+              <span class="spec-label font-mono">DISPONIBILIDAD</span>
+            </div>
+            <div class="spec-card">
+              <mat-icon [style.color]="network.color">security</mat-icon>
+              <span class="spec-value font-display">{{ network.nivelAcceso }}</span>
+              <span class="spec-label font-mono">NIVEL ACCESO</span>
             </div>
           </div>
-        }
+        </div>
       </div>
       
       <div class="card-footer">
@@ -245,12 +354,12 @@
           Cancelar
         </button>
         <button 
-          class="btn-sentinel btn-sentinel-primary" 
+          class="btn-sentinel btn-sentinel-primary"
           [disabled]="isScanning()"
-          (click)="confirmSelection()"
-          [style.background]="'linear-gradient(135deg, ' + network.color + ', ' + network.color + 'cc)'">
-          <mat-icon>{{ isScanning() ? 'hourglass_empty' : 'check' }}</mat-icon>
-          {{ isScanning() ? 'Escaneando...' : 'Confirmar Selección' }}
+          [style.background]="!isScanning() ? 'linear-gradient(135deg, ' + network.color + ', ' + network.color + 'cc)' : ''"
+          (click)="confirmSelection()">
+          <mat-icon>{{ isScanning() ? 'hourglass_empty' : 'verified_user' }}</mat-icon>
+          {{ isScanning() ? 'Analizando Red...' : 'Confirmar y Continuar' }}
         </button>
       </div>
     </div>

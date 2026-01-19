@@ -1,0 +1,427 @@
+<div class="network-flows-page">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <span class="header-tag font-mono">
+                <mat-icon>lan</mat-icon>
+                SENTINEL-ML // MONITOR DE FLUJOS
+            </span>
+            <h1 class="header-title font-display">Simulación de Flujos de Red</h1>
+            <p class="header-subtitle">
+                Visualización en tiempo real del tráfico de red con detección de amenazas mediante Machine Learning
+            </p>
+        </div>
+
+        <!-- Controles de simulación -->
+        <div class="simulation-controls">    
+            <button class="control-btn" [class.active]="ui.isSimulating() && !ui.isPaused()"
+                (click)="ui.isSimulating() ? togglePause() : startSimulation()"
+                [matTooltip]="ui.isSimulating() ? (ui.isPaused() ? 'Reanudar' : 'Pausar') : 'Iniciar'">
+                <mat-icon>{{ ui.isSimulating() ? (ui.isPaused() ? 'play_arrow' : 'pause') : 'play_arrow' }}</mat-icon>
+            </button>
+            <button class="control-btn" [disabled]="!ui.isSimulating()" (click)="stopSimulation()" matTooltip="Detener">
+                <mat-icon>stop</mat-icon>
+            </button>
+            <button class="control-btn" (click)="clearFlows()" matTooltip="Limpiar flujos">
+                <mat-icon>delete_sweep</mat-icon>
+            </button>
+
+            <div class="speed-selector">
+                <span class="font-mono">VELOCIDAD:</span>
+                <select [value]="ui.simulationSpeed()" (change)="setSimulationSpeed(+$any($event.target).value)">
+                    <option [value]="2000">Lenta</option>
+                    <option [value]="1000">Normal</option>
+                    <option [value]="500">Rápida</option>
+                    <option [value]="200">Muy Rápida</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner de estado de configuración -->
+    @if (!configStore.isSystemConfigured) {
+    <div class="config-warning-banner">
+        <mat-icon>warning</mat-icon>
+        <div class="warning-content">
+            <span class="warning-title">Sistema no configurado</span>
+            <span class="warning-text">Configure la red para obtener resultados más precisos</span>
+        </div>
+        <button class="btn-sentinel btn-sentinel-primary btn-sm" routerLink="/network-config">
+            <mat-icon>settings</mat-icon>
+            Configurar Red
+        </button>
+    </div>
+    } @else {
+    <div class="config-status-banner" [class]="'classification-' + configStore.configClasificacion">
+        <div class="status-left">
+            <mat-icon>verified_user</mat-icon>
+            <div class="status-content">
+                <span class="status-title">{{ configStore.configuredNetwork?.nombre }}</span>
+                <span class="status-subtitle font-mono">{{ configStore.configuredNetwork?.nombreCorto }} | {{ configStore.configAlertLevel |
+                    uppercase }}</span>
+            </div>
+        </div>
+        <div class="status-right">
+            <span class="status-badge active">
+                <span class="status-dot"></span>
+                Sistema Activo
+            </span>
+            <span class="ml-count font-mono">{{ configStore.configMlModels.length }} modelos ML</span>
+        </div>
+    </div>
+    }
+
+    <!-- Estadísticas en tiempo real -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <mat-icon>swap_vert</mat-icon>
+            <div class="stat-content">
+                <span class="stat-value font-display">{{ ui.statistics().flowsPerSecond }}</span>
+                <span class="stat-label font-mono">FLUJOS/S</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <mat-icon>speed</mat-icon>
+            <div class="stat-content">
+                <span class="stat-value font-display">{{ uiHelper.formatBytes(ui.statistics().bytesPerSecond) }}</span>
+                <span class="stat-label font-mono">BYTES/S</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <mat-icon>inventory_2</mat-icon>
+            <div class="stat-content">
+                <span class="stat-value font-display">{{ ui.statistics().packetsPerSecond }}</span>
+                <span class="stat-label font-mono">PAQUETES/S</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <mat-icon>link</mat-icon>
+            <div class="stat-content">
+                <span class="stat-value font-display">{{ ui.statistics().activeConnections }}</span>
+                <span class="stat-label font-mono">CONEXIONES</span>
+            </div>
+        </div>
+        <div class="stat-item warning">
+            <mat-icon>warning</mat-icon>
+            <div class="stat-content">
+                <span class="stat-value font-display">{{ ui.statistics().threatsDetected }}</span>
+                <span class="stat-label font-mono">AMENAZAS</span>
+            </div>
+        </div>
+        <div class="stat-item danger">
+            <mat-icon>psychology</mat-icon>
+            <div class="stat-content">
+                <span class="stat-value font-display">{{ ui.statistics().anomaliesDetected }}</span>
+                <span class="stat-label font-mono">ANOMALÍAS ML</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Panel izquierdo: Tabla de flujos -->
+        <div class="flows-panel card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <mat-icon>list_alt</mat-icon>
+                    Flujos de Red en Tiempo Real
+                </h3>
+
+                <!-- Filtros -->
+                <div class="filters">
+                    <select class="filter-select" [value]="ui.filterProtocol()"
+                        (change)="ui.setFilterProtocol($any($event.target).value)">
+                        <option value="ALL">Todos los protocolos</option>
+                        @for (protocol of protocols; track protocol) {
+                        <option [value]="protocol">{{ protocol }}</option>
+                        }
+                    </select>
+
+                    <select class="filter-select" [value]="ui.filterStatus()"
+                        (change)="ui.setFilterStatus($any($event.target).value)">
+                        <option value="ALL">Todos los estados</option>
+                        @for (status of statuses; track status) {
+                        <option [value]="status">{{ uiHelper.getStatusLabel(status) }}</option>
+                        }
+                    </select>
+
+                    <button class="filter-btn" [class.active]="ui.showOnlyThreats()" (click)="toggleShowOnlyThreats()">
+                        <mat-icon>gpp_bad</mat-icon>
+                        Solo amenazas
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body flows-table-container">
+                <table class="flows-table" @staggerList>
+                    <thead>
+                        <tr>
+                            <th>TIEMPO</th>
+                            <th>ORIGEN</th>
+                            <th>DESTINO</th>
+                            <th>PROTOCOLO</th>
+                            <th>DATOS</th>
+                            <th>ESTADO</th>
+                            <th>AMENAZA</th>
+                            <th>ML</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (flow of store.filteredFlows(); track uiHelper.trackByFlowId($index, flow)) {
+                        <tr class="flow-row" [class]="uiHelper.getStatusClass(flow.status)"
+                            [class.selected]="ui.selectedFlow()?.id === flow.id" (click)="ui.selectFlow(flow)" @flowAnimation>
+                            <td class="font-mono">{{ flow.timestamp | date:'HH:mm:ss.SSS' }}</td>
+                            <td>
+                                <div class="ip-cell">
+                                    <mat-icon class="direction-icon">{{ uiHelper.getDirectionIcon(flow.direction) }}</mat-icon>
+                                    <span class="font-mono">{{ flow.sourceIP }}</span>
+                                    <span class="port">:{{ flow.sourcePort }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="ip-cell">
+                                    <span class="font-mono">{{ flow.destinationIP }}</span>
+                                    <span class="port">:{{ flow.destinationPort }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="protocol-badge">{{ flow.protocol }}</span>
+                            </td>
+                            <td class="font-mono">
+                                {{ uiHelper.formatBytes(flow.bytesIn + flow.bytesOut) }}
+                            </td>
+                            <td>
+                                <span class="status-badge" [class]="uiHelper.getStatusClass(flow.status)">
+                                    {{ uiHelper.getStatusLabel(flow.status) }}
+                                </span>
+                            </td>
+                            <td>
+                                @if (flow.threatType !== 'none') {
+                                <span class="threat-badge" [class]="'threat-' + flow.threatType">
+                                    <mat-icon>{{ uiHelper.getThreatIcon(flow.threatType) }}</mat-icon>
+                                    {{ uiHelper.getThreatLabel(flow.threatType) }}
+                                </span>
+                                } @else {
+                                <span class="no-threat">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (flow.mlPrediction) {
+                                <div class="ml-indicator" [class.anomaly]="flow.mlPrediction.isAnomaly">
+                                    <mat-icon>psychology</mat-icon>
+                                    <span>{{ (flow.mlPrediction.confidence * 100).toFixed(0) }}%</span>
+                                </div>
+                                } @else {
+                                <span class="no-ml">-</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="action-btn" matTooltip="Investigar"
+                                    (click)="investigateFlow(flow); $event.stopPropagation()">
+                                    <mat-icon>search</mat-icon>
+                                </button>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="9" class="empty-state">
+                                <mat-icon>hourglass_empty</mat-icon>
+                                <span>Esperando flujos de red...</span>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Panel derecho: Detalles y componentes -->
+        <div class="side-panel">
+            <!-- Detalle del flujo seleccionado -->
+            @if (ui.selectedFlow(); as flow) {
+            <div class="detail-card card" @flowAnimation>
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <mat-icon [class]="uiHelper.getStatusClass(flow.status)">info</mat-icon>
+                        Detalle del Flujo
+                    </h3>
+                    <button class="close-btn" (click)="ui.selectFlow(null)">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+
+                <div class="card-body">
+                    <div class="flow-detail-header" [class]="uiHelper.getStatusClass(flow.status)">
+                        <div class="flow-ips">
+                            <div class="flow-endpoint">
+                                <span class="endpoint-label font-mono">ORIGEN</span>
+                                <span class="endpoint-ip font-display">{{ flow.sourceIP }}</span>
+                                <span class="endpoint-port font-mono">:{{ flow.sourcePort }}</span>
+                                <span class="endpoint-geo">{{ flow.geoSource }}</span>
+                            </div>
+                            <div class="flow-arrow">
+                                <mat-icon>{{ uiHelper.getDirectionIcon(flow.direction) }}</mat-icon>
+                            </div>
+                            <div class="flow-endpoint">
+                                <span class="endpoint-label font-mono">DESTINO</span>
+                                <span class="endpoint-ip font-display">{{ flow.destinationIP }}</span>
+                                <span class="endpoint-port font-mono">:{{ flow.destinationPort }}</span>
+                                <span class="endpoint-geo">{{ flow.geoDestination }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Protocolo</span>
+                            <span class="detail-value">{{ flow.protocol }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Aplicación</span>
+                            <span class="detail-value">{{ flow.applicationLayer }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Bytes IN</span>
+                            <span class="detail-value">{{ uiHelper.formatBytes(flow.bytesIn) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Bytes OUT</span>
+                            <span class="detail-value">{{ uiHelper.formatBytes(flow.bytesOut) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Paquetes</span>
+                            <span class="detail-value">{{ flow.packetsIn + flow.packetsOut }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Duración</span>
+                            <span class="detail-value">{{ uiHelper.formatDuration(flow.duration) }}</span>
+                        </div>
+                    </div>
+
+                    @if (flow.threatType !== 'none') {
+                    <div class="threat-section">
+                        <h4 class="section-title font-mono">
+                            <mat-icon>warning</mat-icon>
+                            AMENAZA DETECTADA
+                        </h4>
+                        <div class="threat-info">
+                            <div class="threat-type">
+                                <mat-icon>{{ uiHelper.getThreatIcon(flow.threatType) }}</mat-icon>
+                                <span>{{ uiHelper.getThreatLabel(flow.threatType) }}</span>
+                            </div>
+                            <div class="threat-score">
+                                <span class="score-label">Score:</span>
+                                <span class="score-value"
+                                    [style.color]="flow.threatScore > 70 ? 'var(--danger)' : 'var(--warning)'">
+                                    {{ flow.threatScore }}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    }
+
+                    @if (flow.mlPrediction) {
+                    <div class="ml-section">
+                        <h4 class="section-title font-mono">
+                            <mat-icon>psychology</mat-icon>
+                            ANÁLISIS ML
+                        </h4>
+                        <div class="ml-info">
+                            <div class="ml-result" [class.anomaly]="flow.mlPrediction.isAnomaly">
+                                <span>{{ flow.mlPrediction.isAnomaly ? 'ANOMALÍA DETECTADA' : 'TRÁFICO NORMAL' }}</span>
+                            </div>
+                            <div class="ml-confidence">
+                                <span>Confianza: {{ (flow.mlPrediction.confidence * 100).toFixed(1) }}%</span>
+                            </div>
+                            <div class="ml-model font-mono">
+                                Modelo: {{ flow.mlPrediction.modelUsed }}
+                            </div>
+                        </div>
+                    </div>
+                    }
+
+                    <div class="flow-actions">
+                        <button class="btn-sentinel btn-sentinel-secondary" (click)="investigateFlow(flow)">
+                            <mat-icon>search</mat-icon>
+                            Investigar
+                        </button>
+                        @if (flow.status === 'critical') {
+                        <button class="btn-sentinel btn-sentinel-danger" (click)="blockIP(flow.sourceIP)">
+                            <mat-icon>block</mat-icon>
+                            Bloquear IP
+                        </button>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- Componentes conectados -->
+            <div class="connected-components card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <mat-icon>hub</mat-icon>
+                        Componentes Conectados
+                    </h3>
+                </div>
+
+                <div class="card-body">
+                    <p class="components-description">
+                        Este módulo se integra con los siguientes componentes del sistema SENTINEL-ML:
+                    </p>
+
+                    <div class="components-list">
+                        @for (component of connectedComponents; track uiHelper.trackByComponentId($index, component)) {
+                        <div class="component-item" [class.active]="component.status === 'active'"
+                            (click)="navigateToComponent(component)">
+                            <div class="component-icon">
+                                <mat-icon>{{ component.icon }}</mat-icon>
+                            </div>
+                            <div class="component-info">
+                                <div class="component-header">
+                                    <span class="component-name">{{ component.name }}</span>
+                                    <mat-icon class="data-flow-icon">{{ uiHelper.getDataFlowIcon(component.dataFlow)
+                                        }}</mat-icon>
+                                </div>
+                                <p class="component-description">{{ component.description }}</p>
+                                <div class="component-data-types">
+                                    @for (dataType of component.dataTypes; track dataType) {
+                                    <span class="data-type-tag">{{ dataType }}</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="component-status" [class]="component.status">
+                                <span class="status-dot"></span>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mapa de topología mini -->
+            <div class="topology-mini card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <mat-icon>account_tree</mat-icon>
+                        Topología de Red
+                    </h3>
+                </div>
+
+                <div class="card-body">
+                    <div class="topology-canvas">
+                        @for (node of networkNodes; track uiHelper.trackByNodeId($index, node)) {
+                        <div class="topo-node" [class]="'node-' + node.type"
+                            [class.compromised]="node.status === 'compromised'"
+                            [class.scanning]="node.status === 'scanning'" [style.left.%]="node.x / 3"
+                            [style.top.%]="node.y / 2" [matTooltip]="node.name + ' (' + node.ip + ')'" @nodeAnimation>
+                            <mat-icon>{{ uiHelper.getNodeIcon(node.type) }}</mat-icon>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

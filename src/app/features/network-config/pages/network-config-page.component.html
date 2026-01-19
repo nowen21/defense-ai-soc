@@ -1,17 +1,29 @@
 <div class="network-config-page">
   
-  <!-- Header de la página -->
+  <!-- Banner de clasificación global -->
+  <div class="classification-banner-global" [class]="'classification-' + currentClassification()">
+    <mat-icon>{{ classificationInfo().icon }}</mat-icon>
+    <span class="classification-text">
+      NIVEL DE CLASIFICACIÓN: {{ classificationInfo().label | uppercase }}
+    </span>
+    <mat-icon>{{ classificationInfo().icon }}</mat-icon>
+  </div>
+  
+  <!-- Header principal -->
   <div class="config-header">
     <div class="header-content">
-      <span class="header-tag font-mono">SETUP WIZARD</span>
-      <h1 class="header-title font-display">Configuración del Sistema</h1>
+      <div class="header-badge">
+        <mat-icon>shield</mat-icon>
+        <span class="font-mono">SENTINEL-ML // CONFIGURACIÓN DE DEFENSA</span>
+      </div>
+      <h1 class="header-title font-display">Sistema de Detección de Amenazas</h1>
       <p class="header-subtitle">
-        Configure SENTINEL-ML para monitorear su infraestructura de red. 
-        Siga los pasos para una integración completa.
+        Configure el sistema de detección inteligente para redes de telecomunicaciones militares.
+        Siga los pasos del asistente para una integración completa.
       </p>
     </div>
     
-    <!-- Indicador de progreso general -->
+    <!-- Indicador de progreso circular -->
     <div class="progress-indicator">
       <div class="progress-circle">
         <svg viewBox="0 0 100 100">
@@ -19,6 +31,7 @@
           <circle 
             class="progress-fill" 
             cx="50" cy="50" r="45"
+            [style.stroke]="networkColor()"
             [style.stroke-dashoffset]="283 - (283 * progressPercentage() / 100)" />
         </svg>
         <span class="progress-value font-display">{{ progressPercentage() }}%</span>
@@ -29,7 +42,7 @@
   
   <!-- Stepper visual -->
   <div class="config-stepper">
-    @for (step of steps; track step.id; let i = $index; let last = $last) {
+    @for (step of steps; track trackByStepId($index, step); let last = $last) {
       <div 
         class="step-item" 
         [class]="getStepClass(step)"
@@ -42,6 +55,7 @@
           }
         </div>
         <div class="step-content">
+          <span class="step-number font-mono">PASO {{ step.id }}</span>
           <span class="step-title">{{ step.titulo }}</span>
           <span class="step-description font-mono">{{ step.descripcion }}</span>
         </div>
@@ -56,172 +70,448 @@
   <div class="config-content" [@stepTransition]="currentStep()">
     
     @switch (currentStep()) {
-      <!-- Paso 1: Tipo de Red -->
+      
+      <!-- ═══════════════════════════════════════════════════════
+           PASO 1: SELECCIÓN DE TIPO DE RED
+           ═══════════════════════════════════════════════════════ -->
       @case (1) {
         <app-network-type-selector-page
-          (networkSelected)="onNetworkSelected($event)">
+          (networkSelected)="onNetworkSelected($event)"
+          (configurationComplete)="onConfigurationComplete($event)">
         </app-network-type-selector-page>
       }
       
-      <!-- Paso 2: Dispositivos -->
+      <!-- ═══════════════════════════════════════════════════════
+           PASO 2: DESCUBRIMIENTO DE ACTIVOS
+           ═══════════════════════════════════════════════════════ -->
       @case (2) {
-        <div class="step-placeholder" @fadeSlide>
-          <div class="placeholder-icon">
-            <mat-icon>devices</mat-icon>
+        <div class="step-content-wrapper" @fadeSlide>
+          <div class="step-header">
+            <div class="step-icon" [style.background]="networkColor() + '20'" [style.color]="networkColor()">
+              <mat-icon>radar</mat-icon>
+            </div>
+            <div class="step-info">
+              <h2 class="step-title-main font-display">Descubrimiento de Activos</h2>
+              <p class="step-subtitle">Resultados del escaneo de red para {{ selectedNetwork()?.nombre }}</p>
+            </div>
           </div>
-          <h2>Detección de Dispositivos</h2>
-          <p>
-            Red seleccionada: <strong style="color: var(--primary)">{{ selectedNetwork()?.nombre }}</strong>
-          </p>
-          <p class="text-muted">
-            SENTINEL-ML escaneará la red para detectar todos los dispositivos conectados.
-          </p>
           
-          <!-- Preview de la red seleccionada -->
-          @if (selectedNetwork(); as network) {
-            <div class="network-preview card">
-              <div class="preview-header">
-                <mat-icon [style.color]="network.color">{{ network.icon }}</mat-icon>
-                <span>{{ network.nombre }}</span>
+          <!-- Resumen del escaneo -->
+          <div class="discovery-summary card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <mat-icon [style.color]="networkColor()">{{ selectedNetwork()?.icon }}</mat-icon>
+                {{ selectedNetwork()?.nombreCorto }} - Resumen de Descubrimiento
+              </h3>
+              <span class="badge-status success">
+                <mat-icon>check_circle</mat-icon>
+                Escaneo Completado
+              </span>
+            </div>
+            
+            <div class="card-body">
+              <!-- Stats del descubrimiento -->
+              <div class="discovery-stats">
+                <div class="discovery-stat">
+                  <mat-icon [style.color]="networkColor()">devices</mat-icon>
+                  <span class="stat-value font-display">{{ defenseConfig()?.devicesDetected || selectedNetwork()?.dispositivos }}</span>
+                  <span class="stat-label font-mono">DISPOSITIVOS DETECTADOS</span>
+                </div>
+                <div class="discovery-stat">
+                  <mat-icon [style.color]="defenseConfig()?.threatsDetected ? 'var(--danger)' : networkColor()">
+                    {{ defenseConfig()?.threatsDetected ? 'warning' : 'verified_user' }}
+                  </mat-icon>
+                  <span class="stat-value font-display" [class.danger]="defenseConfig()?.threatsDetected">
+                    {{ defenseConfig()?.threatsDetected || 0 }}
+                  </span>
+                  <span class="stat-label font-mono">ALERTAS INICIALES</span>
+                </div>
+                <div class="discovery-stat">
+                  <mat-icon [style.color]="networkColor()">psychology</mat-icon>
+                  <span class="stat-value font-display">{{ mlModelsCount() }}</span>
+                  <span class="stat-label font-mono">MODELOS ML DISPONIBLES</span>
+                </div>
+                <div class="discovery-stat">
+                  <mat-icon [style.color]="networkColor()">gpp_bad</mat-icon>
+                  <span class="stat-value font-display">{{ threatCount() }}</span>
+                  <span class="stat-label font-mono">AMENAZAS MONITOREADAS</span>
+                </div>
               </div>
-              <div class="preview-stats">
-                <div class="preview-stat">
-                  <span class="stat-value font-display">{{ network.dispositivos }}+</span>
-                  <span class="stat-label font-mono">DISPOSITIVOS</span>
+              
+              <!-- Detalles de la red -->
+              <div class="discovery-details">
+                <div class="detail-section">
+                  <h4 class="section-title font-mono">
+                    <mat-icon>info</mat-icon>
+                    INFORMACIÓN DE LA RED
+                  </h4>
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <span class="detail-label">Tipo de Red</span>
+                      <span class="detail-value">{{ selectedNetwork()?.nombre }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Entorno</span>
+                      <span class="detail-value">{{ selectedNetwork()?.entorno | titlecase }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Velocidad</span>
+                      <span class="detail-value">{{ selectedNetwork()?.velocidad }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Cobertura</span>
+                      <span class="detail-value">{{ selectedNetwork()?.cobertura }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Latencia Máxima</span>
+                      <span class="detail-value">{{ selectedNetwork()?.latenciaMaxima }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Disponibilidad</span>
+                      <span class="detail-value">{{ selectedNetwork()?.disponibilidadRequerida }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="preview-stat">
-                  <span class="stat-value font-display">{{ network.velocidad }}</span>
-                  <span class="stat-label font-mono">VELOCIDAD</span>
-                </div>
-                <div class="preview-stat">
-                  <span class="stat-value font-display">{{ network.cobertura }}</span>
-                  <span class="stat-label font-mono">COBERTURA</span>
+                
+                <div class="detail-section">
+                  <h4 class="section-title font-mono">
+                    <mat-icon>verified</mat-icon>
+                    ESTÁNDARES DE CUMPLIMIENTO
+                  </h4>
+                  <div class="standards-tags">
+                    @for (standard of selectedNetwork()?.estandares; track standard) {
+                      <span class="standard-tag">{{ standard }}</span>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
-          }
-          
-          <div class="placeholder-actions">
-            <button class="btn-sentinel btn-sentinel-secondary" (click)="previousStep()">
-              <mat-icon>arrow_back</mat-icon>
-              Anterior
-            </button>
-            <button class="btn-sentinel btn-sentinel-primary" (click)="nextStep()">
-              Escanear Dispositivos
-              <mat-icon>search</mat-icon>
-            </button>
+            
+            <div class="card-footer">
+              <button class="btn-sentinel btn-sentinel-secondary" (click)="previousStep()">
+                <mat-icon>arrow_back</mat-icon>
+                Anterior
+              </button>
+              <button 
+                class="btn-sentinel btn-sentinel-primary" 
+                [style.background]="'linear-gradient(135deg, ' + networkColor() + ', ' + networkColor() + 'cc)'"
+                (click)="confirmDiscovery()">
+                Confirmar y Continuar
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
       }
       
-      <!-- Paso 3: Seguridad -->
+      <!-- ═══════════════════════════════════════════════════════
+           PASO 3: CONFIGURACIÓN DE POLÍTICAS
+           ═══════════════════════════════════════════════════════ -->
       @case (3) {
-        <div class="step-placeholder" @fadeSlide>
-          <div class="placeholder-icon warning">
-            <mat-icon>security</mat-icon>
-          </div>
-          <h2>Configuración de Seguridad</h2>
-          <p class="text-muted">
-            Configure las políticas de seguridad y umbrales de detección para su red.
-          </p>
-          
-          <div class="security-options">
-            <div class="security-card card">
-              <mat-icon>shield</mat-icon>
-              <h4>Detección de Intrusiones</h4>
-              <p>IDS/IPS activo</p>
+        <div class="step-content-wrapper" @fadeSlide>
+          <div class="step-header">
+            <div class="step-icon" [style.background]="networkColor() + '20'" [style.color]="networkColor()">
+              <mat-icon>policy</mat-icon>
             </div>
-            <div class="security-card card">
-              <mat-icon>psychology</mat-icon>
-              <h4>Machine Learning</h4>
-              <p>Detección de anomalías</p>
-            </div>
-            <div class="security-card card">
-              <mat-icon>visibility</mat-icon>
-              <h4>Monitoreo 24/7</h4>
-              <p>Alertas en tiempo real</p>
+            <div class="step-info">
+              <h2 class="step-title-main font-display">Políticas de Seguridad</h2>
+              <p class="step-subtitle">Configure las políticas de detección y respuesta para su red</p>
             </div>
           </div>
           
-          <div class="placeholder-actions">
+          <div class="policies-container">
+            <!-- Panel de políticas -->
+            <div class="policies-panel card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <mat-icon [style.color]="networkColor()">security</mat-icon>
+                  Módulos de Detección
+                </h3>
+                <span class="policies-count font-mono">
+                  {{ activePoliciesCount() }} / {{ securityPolicies.length }} ACTIVOS
+                </span>
+              </div>
+              
+              <div class="card-body">
+                <div class="policies-grid">
+                  @for (policy of securityPolicies; track trackByPolicyId($index, policy)) {
+                    <div 
+                      class="policy-card" 
+                      [class.active]="isPolicyActive(policy.id)"
+                      [class]="getPolicyLevelClass(policy.nivel)"
+                      (click)="togglePolicy(policy.id)">
+                      <div class="policy-header">
+                        <div class="policy-toggle">
+                          <mat-icon>{{ isPolicyActive(policy.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                        </div>
+                        <div class="policy-info">
+                          <span class="policy-name">{{ policy.nombre }}</span>
+                          <span class="policy-level font-mono">{{ policy.nivel | uppercase }}</span>
+                        </div>
+                      </div>
+                      <p class="policy-description">{{ policy.descripcion }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+            
+            <!-- Panel de nivel de alerta -->
+            <div class="alert-level-panel card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <mat-icon [style.color]="getAlertLevelColor(alertLevel())">notifications_active</mat-icon>
+                  Nivel de Sensibilidad
+                </h3>
+              </div>
+              
+              <div class="card-body">
+                <p class="alert-description">
+                  Define el umbral de sensibilidad para la generación de alertas. 
+                  Niveles más altos generan más alertas pero pueden incluir falsos positivos.
+                </p>
+                
+                <div class="alert-levels">
+                  @for (level of ['bajo', 'medio', 'alto', 'critico']; track level) {
+                    <button 
+                      class="alert-level-btn"
+                      [class.active]="alertLevel() === level"
+                      [style.--level-color]="getAlertLevelColor(level)"
+                      (click)="setAlertLevel($any(level))">
+                      <mat-icon>
+                        {{ level === 'critico' ? 'error' : level === 'alto' ? 'warning' : level === 'medio' ? 'info' : 'check_circle' }}
+                      </mat-icon>
+                      <span>{{ getAlertLevelLabel(level) }}</span>
+                    </button>
+                  }
+                </div>
+                
+                <div class="alert-level-info" [style.border-color]="getAlertLevelColor(alertLevel())">
+                  <mat-icon [style.color]="getAlertLevelColor(alertLevel())">info</mat-icon>
+                  <div class="info-content">
+                    @switch (alertLevel()) {
+                      @case ('bajo') {
+                        <p>Solo alertas de alta confianza. Menor volumen, mayor precisión.</p>
+                      }
+                      @case ('medio') {
+                        <p>Balance entre volumen y precisión. Recomendado para la mayoría de entornos.</p>
+                      }
+                      @case ('alto') {
+                        <p>Mayor sensibilidad. Detecta más amenazas pero requiere más revisión manual.</p>
+                      }
+                      @case ('critico') {
+                        <p>Máxima sensibilidad. Para entornos de alto riesgo donde ninguna amenaza puede pasar desapercibida.</p>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Acciones -->
+          <div class="step-actions">
             <button class="btn-sentinel btn-sentinel-secondary" (click)="previousStep()">
               <mat-icon>arrow_back</mat-icon>
               Anterior
             </button>
-            <button class="btn-sentinel btn-sentinel-primary" (click)="nextStep()">
-              Configurar Políticas
+            <button 
+              class="btn-sentinel btn-sentinel-primary"
+              [disabled]="activePoliciesCount() === 0"
+              [style.background]="'linear-gradient(135deg, ' + networkColor() + ', ' + networkColor() + 'cc)'"
+              (click)="confirmPolicies()">
+              Confirmar Políticas
               <mat-icon>arrow_forward</mat-icon>
             </button>
           </div>
         </div>
       }
       
-      <!-- Paso 4: Activación -->
+      <!-- ═══════════════════════════════════════════════════════
+           PASO 4: ACTIVACIÓN DEL SISTEMA
+           ═══════════════════════════════════════════════════════ -->
       @case (4) {
-        <div class="step-placeholder final" @fadeSlide>
+        <div class="step-content-wrapper" @fadeSlide>
+          
           @if (!configCompleted()) {
-            <div class="placeholder-icon success">
-              <mat-icon>radar</mat-icon>
-            </div>
-            <h2>Activar SENTINEL-ML</h2>
-            <p class="text-muted">
-              Todo está listo. Active el sistema de monitoreo para comenzar a proteger su red.
-            </p>
-            
-            <div class="activation-summary card">
-              <h4 class="font-mono">RESUMEN DE CONFIGURACIÓN</h4>
-              <div class="summary-grid">
-                <div class="summary-item">
-                  <span class="label">Tipo de Red</span>
-                  <span class="value" [style.color]="selectedNetwork()?.color">
-                    {{ selectedNetwork()?.nombre }}
-                  </span>
-                </div>
-                <div class="summary-item">
-                  <span class="label">Dispositivos</span>
-                  <span class="value">{{ selectedNetwork()?.dispositivos }}+ detectados</span>
-                </div>
-                <div class="summary-item">
-                  <span class="label">Nivel de Riesgo</span>
-                  <span class="value badge-status" [class]="selectedNetwork()?.riesgo === 'alto' ? 'critical' : selectedNetwork()?.riesgo === 'medio' ? 'medium' : 'success'">
-                    {{ selectedNetwork()?.riesgo | uppercase }}
-                  </span>
-                </div>
-                <div class="summary-item">
-                  <span class="label">Protocolos</span>
-                  <span class="value">{{ selectedNetwork()?.protocolos?.length }} configurados</span>
-                </div>
+            <!-- Estado: Listo para activar o activando -->
+            <div class="step-header">
+              <div class="step-icon" [style.background]="networkColor() + '20'" [style.color]="networkColor()">
+                <mat-icon>power_settings_new</mat-icon>
+              </div>
+              <div class="step-info">
+                <h2 class="step-title-main font-display">Activar SENTINEL-ML</h2>
+                <p class="step-subtitle">Revise la configuración y active el sistema de detección</p>
               </div>
             </div>
             
-            <div class="placeholder-actions">
-              <button class="btn-sentinel btn-sentinel-secondary" (click)="previousStep()">
-                <mat-icon>arrow_back</mat-icon>
-                Anterior
-              </button>
-              <button 
-                class="btn-sentinel btn-sentinel-primary activate-btn" 
-                (click)="finishConfiguration()">
-                <mat-icon>power_settings_new</mat-icon>
-                Activar Sistema
-              </button>
+            <!-- Resumen de configuración -->
+            <div class="activation-summary card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <mat-icon [style.color]="networkColor()">summarize</mat-icon>
+                  Resumen de Configuración
+                </h3>
+              </div>
+              
+              <div class="card-body">
+                <div class="summary-grid">
+                  <!-- Red -->
+                  <div class="summary-section">
+                    <h4 class="summary-section-title font-mono">
+                      <mat-icon>lan</mat-icon>
+                      RED CONFIGURADA
+                    </h4>
+                    <div class="summary-card" [style.border-color]="networkColor()">
+                      <div class="summary-card-icon" [style.background]="networkColor()">
+                        <mat-icon>{{ selectedNetwork()?.icon }}</mat-icon>
+                      </div>
+                      <div class="summary-card-content">
+                        <span class="summary-card-title">{{ selectedNetwork()?.nombre }}</span>
+                        <span class="summary-card-subtitle font-mono">{{ selectedNetwork()?.nombreCorto }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Dispositivos -->
+                  <div class="summary-section">
+                    <h4 class="summary-section-title font-mono">
+                      <mat-icon>devices</mat-icon>
+                      ACTIVOS DETECTADOS
+                    </h4>
+                    <div class="summary-value-large font-display" [style.color]="networkColor()">
+                      {{ defenseConfig()?.devicesDetected || selectedNetwork()?.dispositivos }}+
+                    </div>
+                    <span class="summary-value-label font-mono">dispositivos</span>
+                  </div>
+                  
+                  <!-- Políticas -->
+                  <div class="summary-section">
+                    <h4 class="summary-section-title font-mono">
+                      <mat-icon>policy</mat-icon>
+                      POLÍTICAS ACTIVAS
+                    </h4>
+                    <div class="summary-value-large font-display" [style.color]="networkColor()">
+                      {{ activePoliciesCount() }}
+                    </div>
+                    <span class="summary-value-label font-mono">módulos de seguridad</span>
+                  </div>
+                  
+                  <!-- Nivel de alerta -->
+                  <div class="summary-section">
+                    <h4 class="summary-section-title font-mono">
+                      <mat-icon>notifications</mat-icon>
+                      NIVEL DE ALERTA
+                    </h4>
+                    <div class="summary-alert-level" [style.color]="getAlertLevelColor(alertLevel())">
+                      <mat-icon>{{ alertLevel() === 'critico' ? 'error' : 'warning' }}</mat-icon>
+                      <span class="font-display">{{ getAlertLevelLabel(alertLevel()) | uppercase }}</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Clasificación -->
+                  <div class="summary-section">
+                    <h4 class="summary-section-title font-mono">
+                      <mat-icon>security</mat-icon>
+                      CLASIFICACIÓN
+                    </h4>
+                    <div class="summary-classification" [style.background]="classificationInfo().color">
+                      <mat-icon>{{ classificationInfo().icon }}</mat-icon>
+                      <span>{{ classificationInfo().label }}</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Modelos ML -->
+                  <div class="summary-section">
+                    <h4 class="summary-section-title font-mono">
+                      <mat-icon>psychology</mat-icon>
+                      MODELOS ML
+                    </h4>
+                    <div class="summary-value-large font-display" [style.color]="networkColor()">
+                      {{ mlModelsCount() }}
+                    </div>
+                    <span class="summary-value-label font-mono">algoritmos activos</span>
+                  </div>
+                </div>
+                
+                <!-- Barra de progreso de activación -->
+                @if (isActivating()) {
+                  <div class="activation-progress">
+                    <div class="progress-header">
+                      <span class="font-mono">ACTIVANDO SISTEMA...</span>
+                      <span class="font-display">{{ activationProgress() }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div 
+                        class="progress-fill"
+                        [style.width.%]="activationProgress()"
+                        [style.background]="'linear-gradient(90deg, ' + networkColor() + ', ' + networkColor() + '80)'">
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+              
+              <div class="card-footer">
+                <button 
+                  class="btn-sentinel btn-sentinel-secondary" 
+                  [disabled]="isActivating()"
+                  (click)="previousStep()">
+                  <mat-icon>arrow_back</mat-icon>
+                  Anterior
+                </button>
+                <button 
+                  class="btn-sentinel btn-sentinel-primary btn-activate"
+                  [disabled]="isActivating()"
+                  [style.background]="!isActivating() ? 'linear-gradient(135deg, ' + networkColor() + ', ' + networkColor() + 'cc)' : ''"
+                  (click)="startActivation()">
+                  <mat-icon>{{ isActivating() ? 'hourglass_empty' : 'power_settings_new' }}</mat-icon>
+                  {{ isActivating() ? 'Activando...' : 'Activar SENTINEL-ML' }}
+                </button>
+              </div>
             </div>
+            
           } @else {
-            <!-- Estado de activación completada -->
-            <div class="activation-success">
+            <!-- Estado: Activación completada -->
+            <div class="activation-success" @successAnimation>
               <div class="success-animation">
-                <div class="success-circle">
+                <div class="success-circle" [style.background]="networkColor()">
                   <mat-icon>check</mat-icon>
                 </div>
                 <div class="success-rings">
-                  <div class="ring ring-1"></div>
-                  <div class="ring ring-2"></div>
-                  <div class="ring ring-3"></div>
+                  <div class="ring ring-1" [style.border-color]="networkColor()"></div>
+                  <div class="ring ring-2" [style.border-color]="networkColor()"></div>
+                  <div class="ring ring-3" [style.border-color]="networkColor()"></div>
                 </div>
               </div>
-              <h2 class="font-display">¡Sistema Activado!</h2>
-              <p>SENTINEL-ML está protegiendo su red</p>
-              <p class="font-mono redirect-text">Redirigiendo al dashboard...</p>
+              
+              <h2 class="success-title font-display">¡Sistema Activado!</h2>
+              <p class="success-subtitle">SENTINEL-ML está protegiendo su red</p>
+              
+              <div class="success-details">
+                <div class="success-stat">
+                  <mat-icon [style.color]="networkColor()">{{ selectedNetwork()?.icon }}</mat-icon>
+                  <span>{{ selectedNetwork()?.nombre }}</span>
+                </div>
+                <div class="success-stat">
+                  <mat-icon [style.color]="networkColor()">security</mat-icon>
+                  <span>{{ activePoliciesCount() }} políticas activas</span>
+                </div>
+                <div class="success-stat">
+                  <mat-icon [style.color]="networkColor()">psychology</mat-icon>
+                  <span>{{ mlModelsCount() }} modelos ML</span>
+                </div>
+              </div>
+              
+              <p class="redirect-text font-mono">Redirigiendo al dashboard en 2 segundos...</p>
+              
+              <button 
+                class="btn-sentinel btn-sentinel-primary"
+                [style.background]="'linear-gradient(135deg, ' + networkColor() + ', ' + networkColor() + 'cc)'"
+                (click)="navigateToDashboard()">
+                <mat-icon>dashboard</mat-icon>
+                Ir al Dashboard Ahora
+              </button>
             </div>
           }
         </div>

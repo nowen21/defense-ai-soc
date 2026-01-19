@@ -10,8 +10,8 @@ export const routes: Routes = [
         children: [
             { path: 'dashboard', loadChildren: () => import('../app/features/dashboard/dashboard.routes') },
             { path: 'network-config', loadChildren: () => import('../app/features/network-config/network-config.routes') },
-            /*  { path: 'amenazas', loadChildren: () => import('./features/amenazas/amenazas.routes') }
-           */
+            { path: 'network-flows', loadChildren: () => import('../app/features/network-flows/network-flows.routes') }
+        
         ]
     },
     /*{
